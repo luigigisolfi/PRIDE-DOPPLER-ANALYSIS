@@ -54,7 +54,7 @@ BAD_OBSERVATIONS_FLAG = True # if True, it 1) plots the observations as flagged 
 # Select preferred start date and end date to perform the analysis
 start_date = datetime.datetime(2000, 1, 1, tzinfo=timezone.utc)
 end_date =  datetime.datetime(2024, 12, 31, tzinfo=timezone.utc)
-missions_to_analyse = ['juice'] # select only the preferred mission names for which to perform the analysis
+missions_to_analyse = ['jui'] # select only the preferred mission names for which to perform the analysis
 
 root_dir = f'../analysed_pride_data' # change this to your folder containing PRIDE data
 yymm_folders_to_consider = utilities.list_yymm(start_date, end_date)
@@ -97,17 +97,15 @@ bad_observations_mean_doppler_filter = 0.005 # Hz = 5 mHz - Defines the highest 
 
 for mission_name, yymmdds in yymmdd_folders_per_mission.items():
     yymmdd_folders = [mission_name + '_' + yymmdd for yymmdd in yymmdds]
-    # The yymm_folders list is no longer needed
     experiment_names = [utilities.find_experiment_from_yymmdd(yymmdd) for yymmdd in yymmdds]
 
     if BAD_OBSERVATIONS_FLAG and mission_name == 'mro': # we know mro was transmitting with the onboard oscillator
         BAD_OBSERVATIONS_FLAG = False
 
-    # Update the zip() to remove yymm_folder
     for yymmdd_folder, experiment_name in zip(yymmdd_folders, experiment_names):
         # Update the path construction
-        fdets_folder_path = f'../analysed_pride_data/{mission_name}/{yymmdd_folder}/input/complete' #or insert your path
-        output_dir = f'../analysed_pride_data/{mission_name}/{yymmdd_folder}/output_new/' #or insert your path
+        fdets_folder_path = f'{root_dir}/{mission_name}/{yymmdd_folder}/input/complete'
+        output_dir = f'{root_dir}/{mission_name}/{yymmdd_folder}/output/'
 
         if RUN_EXPERIMENTS_STATISTICS_FLAG:
             if os.path.exists(output_dir):
