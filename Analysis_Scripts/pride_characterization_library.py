@@ -4054,24 +4054,14 @@ class PrideDopplerCharacterization:
                     suppress = suppress)
 
         def get_elevation_plot(self, files_list, target, station_ids, mission_name, suppress=False, save_dir=None):
-            """
-            Reads a list of observation files, extracts time bounds,
-            queries JPL Horizons for elevation data, and plots results.
-
-            Parameters:
-                files_list (list): List of file paths to process.
-                target (str): Target body name for Horizons query (e.g., 'JUICE').
-                station_ids (list): List of station IDs for Horizons query.
-                mission_name (str): Name of the mission.
-                suppress (bool): Flag to suppress plot display.
-                save_dir (str): Directory to save the plot.
-            """
-
             station_names = [self.Utilities.ID_to_site(site_ID) for site_ID in station_ids if site_ID is not None]
             geodetic_states = [self.Utilities.site_to_geodetic_position(station_name) for station_name in station_names]
             fdets_filename_pattern = r"Fdets\.\w+\d{4}\.\d{2}\.\d{2}(?:-\d{4}-\d{4})?\.(\w+)(?:\.complete)?\.r2i\.txt"
-            plt.figure(figsize=(13, 10))  # Initialize the plot
-            station_plots = []  # List to store station names for saving plot filenames
+            plt.figure(figsize=(13, 10))
+            station_plots = []
+
+            # Store data for saving later
+            all_station_data = []
 
             for i, file_path in enumerate(files_list):
                 match = re.search(fdets_filename_pattern, file_path)
@@ -4084,10 +4074,9 @@ class PrideDopplerCharacterization:
 
                 times = []
                 times_strings = []
-                # Read the file and extract times
                 with open(file_path, 'r') as file:
                     for line in file:
-                        if line.startswith("#"):  # Skip header lines
+                        if line.startswith("#"):
                             continue
 
                         parts = line.split()
@@ -4122,64 +4111,79 @@ class PrideDopplerCharacterization:
                                   'lat': geodetic_state[1],
                                   'elevation': geodetic_state[0]/1000}
 
-
                 obj = Horizons(id=target,
                                location=horizons_coord,
                                epochs={'start':min_times_strings, 'stop':max_times_strings,
                                        'step':'1m'})
 
                 horizons_table = obj.ephemerides()
+
                 # Create the time list with 1-minute intervals
                 time_list = []
                 current_time = np.min(times)
                 while current_time <= np.max(times):
                     time_list.append(current_time)
                     current_time += timedelta(minutes=1)
+
                 # Plot elevation for this station
                 plt.plot(time_list, horizons_table['EL'], label=receiving_station_name)
                 station_plots.append(receiving_station_name)
 
+                # Store data for this station
+                all_station_data.append({
+                    'station': receiving_station_name,
+                    'time_list': time_list,
+                    'elevations': horizons_table['EL'],
+                    'times': times
+                })
+
             # Final plot settings
-            utc_date = times[0].date()
-            plt.xlabel(f"UTC Time (HH:MM:SS) on {utc_date}")
-            plt.ylabel("Elevation (degrees)")
-            plt.title(f"Elevation Plot for {target} - Mission {mission_name}")
-            plt.legend()
-            plt.grid(True)
-            plt.xticks(rotation=45)
+            if all_station_data:
+                utc_date = all_station_data[0]['times'][0].date()
+                plt.xlabel(f"UTC Time (HH:MM:SS) on {utc_date}")
+                plt.ylabel("Elevation (degrees)")
+                plt.title(f"Elevation Plot for {target} - Mission {mission_name}")
+                plt.legend()
+                plt.grid(True)
+                plt.xticks(rotation=45)
 
-            # Set x-ticks format to HH:MM:SS and limit number of ticks
-            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
-            plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(15))
+                # Set x-ticks format to HH:MM:SS and limit number of ticks
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+                plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(15))
 
-            if not suppress:
-                plt.show()
+                # SAVE BEFORE SHOW
+                if save_dir:
+                    os.makedirs(save_dir, exist_ok=True)
+                    try:
+                        # Get the x-tick values
+                        x_ticks = plt.gca().get_xticks()
+                        first_tick = mdates.num2date(x_ticks[0]).strftime('%H%M')
+                        last_tick = mdates.num2date(x_ticks[-1]).strftime('%H%M')
 
-            plt.close()
+                        if len(files_list) == 1:
+                            station_data = all_station_data[0]
+                            save_path = f"{save_dir}/{station_data['station']}_elevation_plot_{utc_date}-{first_tick}-{last_tick}.png"
+                            txt_filename = os.path.join(save_dir, f"{station_data['station']}_elevation_data_{utc_date}-{first_tick}-{last_tick}.txt")
 
-            # Handle saving plot based on single or multiple stations
-            if save_dir:
-                os.makedirs(save_dir, exist_ok=True)
-                try:
-                    # Get the x-tick values
-                    x_ticks = plt.gca().get_xticks()
-                    # Convert x-ticks to datetime objects and format them
-                    first_tick = mdates.num2date(x_ticks[0]).strftime('%H%M')
-                    last_tick = mdates.num2date(x_ticks[-1]).strftime('%H%M')
+                            with open(txt_filename, "w") as txt_file:
+                                txt_file.write("# Time (UTC) | Elevation (degrees)\n")
+                                for t, el in zip(station_data['time_list'], station_data['elevations']):
+                                    txt_file.write(f"{t.strftime('%Y-%m-%dT%H:%M:%S')} | {el:.2f}\n")
 
-                    if len(files_list) == 1:  # If only one station
-                        save_path = f"{save_dir}/{station_plots[0]}_elevation_plot_{utc_date}-{first_tick}-{last_tick}.png"
-                        txt_filename = os.path.join(save_dir, f"{station_plots[0]}_elevation_data_{utc_date}-{first_tick}-{last_tick}.txt")
-                        with open(txt_filename, "w") as txt_file:
-                            txt_file.write("# Time (UTC) | Elevation (degrees)\n")
-                            for t, el in zip(time_list, horizons_table['EL']):
-                                txt_file.write(f"{t.strftime('%Y-%m-%dT%H:%M:%S')} | {el:.2f}\n")
-                    else:  # If multiple stations
-                        save_path = f"{save_dir}/elevation_plot_{mission_name}_{utc_date}.png"
+                            plt.savefig(save_path, bbox_inches='tight', dpi=150)
+                            print(f"Plot saved to: {save_path}")
+                        else:
+                            save_path = f"{save_dir}/elevation_plot_{mission_name}_{utc_date}.png"
+                            plt.savefig(save_path, bbox_inches='tight', dpi=150)
+                            print(f"Plot saved to: {save_path}")
+                    except Exception as e:
+                        print(f'Error saving plot: {e}')
 
-                    plt.savefig(save_path)
-                except Exception as e:
-                    print(f'Not a valid station: {e}')
+                # SHOW AFTER SAVE
+                if not suppress:
+                    plt.show()
+
+                plt.close()
 
         def read_user_defined_parameters_file(self, filename):
             data = defaultdict(list)  # Dictionary to store parameter data
