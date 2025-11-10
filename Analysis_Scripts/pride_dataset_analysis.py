@@ -69,19 +69,18 @@ for mission_name in missions_to_analyse:
         print(f"⚠️  Warning: Mission root path '{mission_root}' does not exist.")
         continue
 
-    for yymm_folder in months_list:
-        if mission_name == 'vex' and yymm_folder != '1401': #for Vidhya's paper, we only care about vex_1401.
+    for yymmdd in days_list:
+        if mission_name == 'vex' and not yymmdd.startswith('1401'):
             continue
-        month_folder_name = f"{mission_name}_{yymm_folder}"
-        month_folder_path = os.path.join(mission_root, month_folder_name)
-        if not os.path.exists(month_folder_path):
-            continue  # continue to next yymmdd_folder
-        for yymmdd in days_list:
-            day_folder_name = f"{mission_name}_{yymmdd}"
-            day_folder_path = os.path.join(month_folder_path, day_folder_name)
-            if not os.path.exists(day_folder_path):
-                continue  # continue to next yymmdd_folder
-            yymmdd_folders_per_mission[mission_name].append(yymmdd)
+
+        day_folder_name = f"{mission_name}_{yymmdd}"
+        day_folder_path = os.path.join(mission_root, day_folder_name)
+
+        if not os.path.exists(day_folder_path):
+            continue
+
+        # If it exists, add it to the list
+        yymmdd_folders_per_mission[mission_name].append(yymmdd)
 
 if not yymmdd_folders_per_mission:
     print(f'No files found between {start_date} and {end_date} for mission: {mission_name.upper()}.\nAborting...\n')
@@ -96,18 +95,19 @@ color_dict = defaultdict(list)
 
 bad_observations_mean_doppler_filter = 0.005 # Hz = 5 mHz - Defines the highest acceptable value of mean Doppler noise for a given pass over a station
 
-# Loop through missions and experiments
 for mission_name, yymmdds in yymmdd_folders_per_mission.items():
     yymmdd_folders = [mission_name + '_' + yymmdd for yymmdd in yymmdds]
-    yymm_folders = [mission_name + '_' + yymmdd[:4] for yymmdd in yymmdds]
+    # The yymm_folders list is no longer needed
     experiment_names = [utilities.find_experiment_from_yymmdd(yymmdd) for yymmdd in yymmdds]
 
     if BAD_OBSERVATIONS_FLAG and mission_name == 'mro': # we know mro was transmitting with the onboard oscillator
         BAD_OBSERVATIONS_FLAG = False
 
-    for yymm_folder, yymmdd_folder, experiment_name in zip(yymm_folders, yymmdd_folders, experiment_names):
-        fdets_folder_path = f'../analysed_pride_data/{mission_name}/{yymm_folder}/{yymmdd_folder}/input/complete' #or insert your path
-        output_dir = f'../analysed_pride_data/{mission_name}/{yymm_folder}/{yymmdd_folder}/output/' #or insert your path
+    # Update the zip() to remove yymm_folder
+    for yymmdd_folder, experiment_name in zip(yymmdd_folders, experiment_names):
+        # Update the path construction
+        fdets_folder_path = f'../analysed_pride_data/{mission_name}/{yymmdd_folder}/input/complete' #or insert your path
+        output_dir = f'../analysed_pride_data/{mission_name}/{yymmdd_folder}/output_new/' #or insert your path
 
         if RUN_EXPERIMENTS_STATISTICS_FLAG:
             if os.path.exists(output_dir):
