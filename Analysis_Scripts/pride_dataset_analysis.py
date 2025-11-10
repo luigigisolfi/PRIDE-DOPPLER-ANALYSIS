@@ -104,7 +104,7 @@ for mission_name, yymmdds in yymmdd_folders_per_mission.items():
 
     for yymmdd_folder, experiment_name in zip(yymmdd_folders, experiment_names):
         # Update the path construction
-        fdets_folder_path = f'{root_dir}/{mission_name}/{yymmdd_folder}/input/complete'
+        fdets_folder_path = f'{root_dir}/{mission_name}/{yymmdd_folder}/input/'
         output_dir = f'{root_dir}/{mission_name}/{yymmdd_folder}/output/'
 
         if RUN_EXPERIMENTS_STATISTICS_FLAG:

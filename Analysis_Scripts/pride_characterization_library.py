@@ -3165,14 +3165,12 @@ class PrideDopplerCharacterization:
             Inputs: root_folder (namely, dataset) [required]
                     JUICE [optional] (if JUICE == True, JUICE format is assumed. if JUICE == False, other missions format is assumed)
 
-            Please note: For mex Phobos flyby, only the file complete.r*i.txt are processed
-
             """
 
             print(f'Getting Outputs From Folder: {root_folder} ...\n')
             # Compile the regex pattern to match filenames
             pattern = re.compile('r2i.txt$')
-            pattern_mex = re.compile(r'complete.+r2i.txt$')
+            pattern_mex = re.compile(r'.+r2i.txt$')
 
             # Iterate through all directories and subdirectories
             for dirpath, _, filenames in os.walk(root_folder):
