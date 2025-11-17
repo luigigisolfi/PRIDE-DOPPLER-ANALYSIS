@@ -2683,9 +2683,6 @@ class PrideDopplerCharacterization:
                 utc_datetime = extracted_data['utc_datetime']
                 signal_to_noise = extracted_data['Signal-to-Noise']
                 doppler_noise_hz = extracted_data['Doppler Noise [Hz]']
-                first_col_name = extracted_data['first_col_name']
-                second_col_name = extracted_data['second_col_name']
-                fifth_col_name = extracted_data['fifth_col_name']
                 utc_date = extracted_data['utc_date']
                 base_frequency = extracted_data['base_frequency']
                 frequency_detection = extracted_data['Freq detection [Hz]']
@@ -2756,7 +2753,7 @@ class PrideDopplerCharacterization:
                 # Proceed to calculate Overlapping Allan Deviation, ensuring no invalid values
                 try:
                     taus_doppler, oadev_doppler, original_errors, ns = allantools.oadev(
-                        np.array(doppler_noise_hz) / (np.array(frequency_detection) + base_frequency),
+                        np.array(doppler_noise_hz) / (base_frequency),
                         rate=rate_fdets,
                         data_type='freq',
                         taus='decade'
@@ -2990,6 +2987,85 @@ class PrideDopplerCharacterization:
             return filtered_list
 
 
+        def compute_oadev_at_tau(self, extracted_data_list, target_tau=10.0):
+            """
+            Computes the Overlapping Allan Deviation (OADEV) for a specific tau value for each station.
+
+            This function is designed for data extraction and does not perform any plotting.
+
+            Args:
+                extracted_data_list (list): A list of data dictionaries, one for each station.
+                target_tau (float): The averaging time (tau) in seconds at which to calculate the ADEV.
+
+            Returns:
+                pandas.DataFrame: A DataFrame with columns ['station', 'target_tau', 'adev_at_tau', 'error_at_tau']
+                                  containing the results for each station.
+            """
+            if not isinstance(extracted_data_list, list):
+                extracted_data_list = [extracted_data_list]
+
+            results = []
+
+            for extracted_data in extracted_data_list:
+                station_name = extracted_data.get('receiving_station_name', 'Unknown')
+                utc_datetime = extracted_data.get('utc_datetime')
+                doppler_noise_hz = extracted_data.get('Doppler Noise [Hz]')
+                base_frequency = extracted_data.get('base_frequency')
+
+                if not all([utc_datetime, doppler_noise_hz, base_frequency]):
+                    print(f"Skipping {station_name}: Missing essential data.")
+                    continue
+
+                # --- Determine sampling rate (rate) ---
+                t_jd = np.array([Time(time).jd for time in utc_datetime])
+                diffs = np.diff(t_jd)
+                if len(diffs) == 0:
+                    print(f"Skipping {station_name}: Not enough data points to determine sampling rate.")
+                    continue
+
+                # Use the median difference for robustness against outliers
+                median_diff_days = np.median(diffs)
+                if median_diff_days <= 0:
+                    print(f"Skipping {station_name}: Non-positive sampling interval detected.")
+                    continue
+                rate = 1 / (median_diff_days * 86400) # Convert days to seconds
+
+                # --- Compute OADEV ---
+                try:
+                    # Use 'all' taus to ensure we have data around our target_tau
+                    taus, oadev, errors, _ = allantools.oadev(
+                        data=np.array(doppler_noise_hz) / base_frequency,
+                        rate=rate,
+                        data_type='freq',
+                        taus='all' # Use 'all' for better resolution around the target
+                    )
+                except Exception as e:
+                    print(f"Skipping {station_name} due to error in Allan deviation computation: {e}")
+                    continue
+
+                if len(taus) == 0:
+                    print(f"Skipping {station_name}: ADEV computation returned no data.")
+                    continue
+
+                # --- Find the ADEV value closest to the target tau ---
+                # np.argmin finds the index of the minimum value.
+                # By taking the absolute difference, we find the index of the tau closest to our target.
+                closest_tau_index = np.argmin(np.abs(taus - target_tau))
+
+                adev_at_target = oadev[closest_tau_index]
+                error_at_target = errors[closest_tau_index]
+                actual_tau = taus[closest_tau_index]
+
+                results.append({
+                    'station': station_name,
+                    'target_tau': actual_tau, # Store the actual tau value found
+                    'adev_at_tau': adev_at_target,
+                    'error_at_tau': error_at_target
+                })
+
+            return pd.DataFrame(results)
+
+
         def plot_oadev_stations(self, extracted_data_list, mission_name, experiment_name = None, tau_min=None, tau_max=None, save_dir=None, suppress=False, color_regions=False):
             """
             Plots Overlapping Allan Deviation (oadev) and saves one plot per unique date and corresponding data to CSV files.
@@ -3045,7 +3121,7 @@ class PrideDopplerCharacterization:
                     # Compute oadev
                     try:
                         taus, oadev, errors, _ = allantools.oadev(
-                            np.array(doppler_noise_hz) / (np.array(frequency_detection) + base_frequency),
+                            np.array(doppler_noise_hz) / (base_frequency),
                             rate=rate_fdets,
                             data_type='freq',
                             taus='decade'
@@ -3064,6 +3140,7 @@ class PrideDopplerCharacterization:
                     taus = taus[tau_mask]
                     oadev = np.array(oadev)[tau_mask]
                     errors = np.array(errors)[tau_mask]
+
 
                     # Only use data from this date
                     #date_data_mask = [d.strftime('%Y-%m-%d') == date for d in utc_datetime]
@@ -3093,6 +3170,7 @@ class PrideDopplerCharacterization:
                 log_ticks_x = np.logspace(np.log10(taus[0]), np.log10(taus[-1]), num=10)
                 valid_xticks = np.searchsorted(taus, log_ticks_x)
                 valid_xticks = valid_xticks[valid_xticks < len(taus)]
+
                 ax.set_xticks(taus[valid_xticks])
                 ax.set_xlim(9, 110)
                 ax.set_xticklabels([f"{round(tick)}" for tick in taus[valid_xticks]])
@@ -3101,22 +3179,13 @@ class PrideDopplerCharacterization:
 
                 # Save plot
                 if save_dir:
-                    fig_path = os.path.join(save_dir, f"{mission_name}_{date}_mad.png")
+                    fig_path = os.path.join(save_dir, f"{mission_name}_{date}_oadev.png")
                     plt.savefig(fig_path)
 
                 if not suppress:
                     plt.show()
 
                 plt.close()
-
-                # Save CSV
-                if save_dir and output_rows:
-                    csv_path = os.path.join(save_dir, f"{mission_name}_{date}_mad.csv")
-                    with open(csv_path, 'w', newline='') as f:
-                        writer = csv.writer(f)
-                        writer.writerow(["Tau (s)", "Overlapping Allan Deviation", "Error", "Station"])
-                        writer.writerows(output_rows)
-
 
         def get_all_stations_oadev_plot(self, fdets_folder_path, mission_name, experiment_name = None, extracted_parameters_list = None, tau_min = None, tau_max = None, two_step_filter = True, save_dir = None):
 
@@ -3325,7 +3394,7 @@ class PrideDopplerCharacterization:
                 # Proceed to calculate Overlapping Allan Deviation, ensuring no invalid values
                 try:
                     taus_doppler, oadev_doppler, errors, ns = allantools.oadev(
-                        np.array(doppler_noise_hz) / (np.array(frequency_detection) + base_frequency),
+                        np.array(doppler_noise_hz) / (base_frequency),
                         rate=rate_fdets,
                         data_type='freq',
                         taus='all'
@@ -3446,7 +3515,6 @@ class PrideDopplerCharacterization:
 
             utc_datetime = extracted_data['utc_datetime']
             base_frequency = extracted_data['base_frequency']
-            frequency_detection = extracted_data['Freq detection [Hz]']
             doppler_noise_hz = extracted_data['Doppler Noise [Hz]']
 
             # Convert UTC datetime to Julian Date
@@ -3463,29 +3531,18 @@ class PrideDopplerCharacterization:
                 return(None)
 
 
-            # Proceed to calculate Overlapping Allan Deviation, ensuring no invalid values
-            try:
-                taus_doppler, oadev_doppler, errors, ns = allantools.oadev(
-                    np.array(doppler_noise_hz) / (np.array(frequency_detection) + base_frequency),
-                    rate=rate_fdets,
-                    data_type='freq',
-                    taus='all'
-                )
-            except Exception as e:
-                print(f"An error occurred: {e}")
-
             # Calculate Overlapping Allan Deviation for Doppler noise
             taus_doppler, oadev_doppler, errors, ns = allantools.oadev(
-                np.array(doppler_noise_hz) / (np.array(frequency_detection) + base_frequency),
+                np.array(doppler_noise_hz) / (base_frequency),
                 rate=rate_fdets,
                 data_type='freq',
                 taus='all'
             )
+
             # Ensure tau and interpol_time are within the range of taus_doppler
             if tau >= max(taus_doppler) or (tau + delta_tau) >= max(taus_doppler):
                 print("Most common difference is zero or not found; cannot calculate rate_fdets. Hence, no plot is available.")
                 return(None)
-
 
             # Interpolation
             interpolated_data = CubicSpline(taus_doppler, oadev_doppler, extrapolate=True)
@@ -3507,10 +3564,10 @@ class PrideDopplerCharacterization:
         ########################################################################################################################################
 
         def plot_user_defined_parameters(self, extracted_data, save_dir=None, suppress=False,
-                                         plot_snr=False, plot_doppler_noise=False, plot_fdets=False, plot_mad=False):
+                                         plot_snr=False, plot_doppler_noise=False, plot_fdets=False, plot_oadev=False):
             """
             Description:
-            Plots user-defined parameters (such as Signal-to-Noise Ratio, Doppler Noise, Frequency Detections, and MAD)
+            Plots user-defined parameters (such as Signal-to-Noise Ratio, Doppler Noise, Frequency Detections, and OADEV)
             extracted from observational data over a specified time range (UTC). The function generates subplots for the
             selected parameters and saves the plot as an image file in the specified directory. It also displays the plot
             on the screen unless suppression is enabled.
@@ -3540,8 +3597,8 @@ class PrideDopplerCharacterization:
             plot_fdets : bool, optional
                 If True, plots the Frequency Detections. Default is False.
 
-            plot_mad : bool, optional
-                If True, plots the Mean Absolute Deviation (MAD). Default is False.
+            plot_oadev : bool, optional
+                If True, plots the overlapping Allan Deviation (OADEV). Default is False.
 
             Output:
             None
@@ -3561,7 +3618,7 @@ class PrideDopplerCharacterization:
                 xticks = np.linspace(0, len(utc_datetime) - 1, num=num_ticks, dtype=int)
                 xtick_labels = [utc_datetime[i].strftime("%H:%M:%S") for i in xticks]
 
-                plot_flags = {'snr': plot_snr, 'noise': plot_doppler_noise, 'fdets': plot_fdets, 'mad': plot_mad}
+                plot_flags = {'snr': plot_snr, 'noise': plot_doppler_noise, 'fdets': plot_fdets, 'oadev': plot_oadev}
                 active_flags = [key for key, value in plot_flags.items() if value]
 
                 fig, axs = plt.subplots(len(active_flags), 1, figsize=(12, 10))

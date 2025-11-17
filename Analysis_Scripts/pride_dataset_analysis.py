@@ -45,7 +45,7 @@ analysis = pride.Analysis(process_fdets, utilities) # create Analysis Object
 
 ############################################################ SET THE FLAGS ###########################################################################
 RUN_EXPERIMENTS_STATISTICS_FLAG = True # if True, creates the outputs from which the analysis is carried out.
-ALLAN_DEVIATIONS_FLAG = False # if True, creates and shows the Overlapping Allan Deviation plots.
+ALLAN_DEVIATIONS_FLAG = True # if True, creates and shows the Overlapping Allan Deviation plots.
 PLOT_GAUSSIAN_FLAG = False # if True, it plots the best fit Gaussian on top of Doppler noise distribution
 COMPARE_FILTERS_FLAG = False # if True, it plots the original data vs the z-score filtered one.
 BAD_OBSERVATIONS_FLAG = True # if True, it 1) plots the observations as flagged and 2) removes them from the final statistics for mean FoM computation
@@ -55,7 +55,6 @@ BAD_OBSERVATIONS_FLAG = True # if True, it 1) plots the observations as flagged 
 start_date = datetime.datetime(2000, 1, 1, tzinfo=timezone.utc)
 end_date =  datetime.datetime(2024, 12, 31, tzinfo=timezone.utc)
 missions_to_analyse = ['jui'] # select only the preferred mission names for which to perform the analysis
-
 root_dir = f'../analysed_pride_data' # change this to your folder containing PRIDE data
 yymm_folders_to_consider = utilities.list_yymm(start_date, end_date)
 months_list = list(yymm_folders_to_consider.keys())
@@ -122,6 +121,9 @@ for mission_name, yymmdds in yymmdd_folders_per_mission.items():
                     files_list.append(os.path.join(dir_path, file))
             # Extract data
             extracted_data_list = process_fdets.extract_folder_data(dir_path)
+
+            output_file_path = os.path.join(output_dir, f"oadev_at_10s.txt")
+            oadev10s_dict = analysis.compute_oadev_at_tau(extracted_data_list, target_tau=10.0)
 
             # Uncomment the following line to plot the filtered data in the outputs (instead of the original PRIDE data).
             #extracted_data_list = analysis.two_step_filter(extracted_data_list)
@@ -209,6 +211,20 @@ for mission_name, yymmdds in yymmdd_folders_per_mission.items():
             suppress = False
             analysis.get_all_stations_oadev_plot(fdets_folder_path, mission_name, experiment_name, tau_min = tau_min, tau_max = tau_max, two_step_filter = True, save_dir = output_dir)
 
+            with open(output_file_path, "w") as f:
+                # Write a header for clarity
+                f.write(f"# Overlapping Allan Deviation (ADEV) at tau ~ 10s for Mission: {mission_name}, Experiment: {experiment_name}\n")
+                f.write("# Station | Target Tau (s) | ADEV (σy(τ)) | Error\n")
+                f.write("-" * 60 + "\n")
+
+                # Iterate over each row in the DataFrame
+                for index, row in oadev10s_dict.iterrows():
+                    f.write(
+                        f"{row['station']:<10} | "
+                        f"{row['target_tau']:<14.2f} | "
+                        f"{row['adev_at_tau']:.4e}   | "
+                        f"{row['error_at_tau']:.4e}\n"
+                    )
         # Set colors for plotting (based on mission name)
         if mission_name == 'vex':
             color_dict[experiment_name] = 'red'
