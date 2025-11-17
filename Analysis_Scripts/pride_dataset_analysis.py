@@ -212,7 +212,9 @@ for mission_name, yymmdds in yymmdd_folders_per_mission.items():
             suppress = True
             analysis.get_all_stations_oadev_plot(fdets_folder_path, mission_name, experiment_name, tau_min = tau_min, tau_max = tau_max, two_step_filter = True, save_dir = output_dir, suppress = suppress)
 
-            oadev10s_dict = analysis.compute_oadev_at_tau(extracted_data_list, target_tau=10.0, tau_min = tau_min, tau_max = tau_max, two_step_filter= True)
+            # The following line creates an additional file with
+            # oadev at tau = 10 s only (the get_all_stations_oadev_plot function creates a file with oadev at all taus)
+            #oadev10s_dict = analysis.compute_oadev_at_tau(extracted_data_list, target_tau=10.0, tau_min = tau_min, tau_max = tau_max, two_step_filter= True)
 
             with open(output_file_path, "w") as f:
                 # Write a header for clarity
