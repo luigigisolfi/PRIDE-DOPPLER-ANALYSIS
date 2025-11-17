@@ -23,6 +23,7 @@ import csv
 from scipy.stats import norm
 import random
 
+
 ########################################################################################################################################
 ##################################################### Main Class Definition ############################################################
 ########################################################################################################################################
@@ -2987,9 +2988,10 @@ class PrideDopplerCharacterization:
             return filtered_list
 
 
-        def compute_oadev_at_tau(self, extracted_data_list, target_tau=10.0):
+        def compute_oadev_at_tau(self, extracted_data_list, target_tau=10.0, tau_min = None, tau_max = None, two_step_filter = False):
             """
-            Computes the Overlapping Allan Deviation (OADEV) for a specific tau value for each station.
+            Computes the Overlapping Allan Deviation (OADEV) for a specific tau value
+            for each station, separated by date.
 
             This function is designed for data extraction and does not perform any plotting.
 
@@ -2998,77 +3000,122 @@ class PrideDopplerCharacterization:
                 target_tau (float): The averaging time (tau) in seconds at which to calculate the ADEV.
 
             Returns:
-                pandas.DataFrame: A DataFrame with columns ['station', 'target_tau', 'adev_at_tau', 'error_at_tau']
-                                  containing the results for each station.
+                pandas.DataFrame: A DataFrame with columns ['date', 'station', 'target_tau',
+                                                          'adev_at_tau', 'error_at_tau']
+                                  containing the results for each station on each day.
             """
             if not isinstance(extracted_data_list, list):
                 extracted_data_list = [extracted_data_list]
 
+            if two_step_filter:
+                extracted_data_list = self.two_step_filter(extracted_data_list)
+
+            # --- NEW: Group data by date first ---
+            data_by_date = defaultdict(list)
+            for data_block in extracted_data_list:
+                # Create a temporary mapping of date strings to data points for this block
+                daily_points = defaultdict(lambda: {
+                    'utc_datetime': [],
+                    'Doppler Noise [Hz]': []
+                })
+
+                for i, dt in enumerate(data_block['utc_datetime']):
+                    date_str = dt.strftime('%Y-%m-%d')
+                    daily_points[date_str]['utc_datetime'].append(dt)
+                    daily_points[date_str]['Doppler Noise [Hz]'].append(data_block['Doppler Noise [Hz]'][i])
+
+                # Re-assemble into blocks per day and add to the main dictionary
+                for date_str, points in daily_points.items():
+                    daily_block = data_block.copy() # Copy metadata
+                    daily_block.update(points) # Update with daily data points
+                    data_by_date[date_str].append(daily_block)
+
             results = []
 
-            for extracted_data in extracted_data_list:
-                station_name = extracted_data.get('receiving_station_name', 'Unknown')
-                utc_datetime = extracted_data.get('utc_datetime')
-                doppler_noise_hz = extracted_data.get('Doppler Noise [Hz]')
-                base_frequency = extracted_data.get('base_frequency')
+            # --- Loop through each date ---
+            for date, daily_data_list in sorted(data_by_date.items()):
+                # --- Loop through each station's data for that date ---
+                for extracted_data in daily_data_list:
+                    station_name = extracted_data.get('receiving_station_name', 'Unknown')
+                    utc_datetime = extracted_data.get('utc_datetime')
+                    doppler_noise_hz = extracted_data.get('Doppler Noise [Hz]')
+                    base_frequency = extracted_data.get('base_frequency')
 
-                if not all([utc_datetime, doppler_noise_hz, base_frequency]):
-                    print(f"Skipping {station_name}: Missing essential data.")
-                    continue
+                    if not all([utc_datetime, doppler_noise_hz, base_frequency]):
+                        print(f"Skipping {station_name} on {date}: Missing essential data.")
+                        continue
 
-                # --- Determine sampling rate (rate) ---
-                t_jd = np.array([Time(time).jd for time in utc_datetime])
-                diffs = np.diff(t_jd)
-                if len(diffs) == 0:
-                    print(f"Skipping {station_name}: Not enough data points to determine sampling rate.")
-                    continue
+                    # --- Determine sampling rate (rate) ---
+                    t_jd = np.array([Time(time).jd for time in utc_datetime])
+                    diffs = np.diff(t_jd)
+                    if len(diffs) == 0:
+                        print(f"Skipping {station_name} on {date}: Not enough data points to determine sampling rate.")
+                        continue
 
-                # Use the median difference for robustness against outliers
-                median_diff_days = np.median(diffs)
-                if median_diff_days <= 0:
-                    print(f"Skipping {station_name}: Non-positive sampling interval detected.")
-                    continue
-                rate = 1 / (median_diff_days * 86400) # Convert days to seconds
+                    t_jd = np.array([Time(time).jd for time in utc_datetime])
+                    diffs = np.diff(t_jd)
+                    most_common_diff = Counter(diffs).most_common(1)
+                    if not most_common_diff or most_common_diff[0][0] == 0:
+                        print(f"Skipping dataset {i+1}: Cannot determine sampling rate.")
+                        continue
+                    rate_fdets = 1 / (most_common_diff[0][0] * 86400)
 
-                # --- Compute OADEV ---
-                try:
-                    # Use 'all' taus to ensure we have data around our target_tau
-                    taus, oadev, errors, _ = allantools.oadev(
-                        data=np.array(doppler_noise_hz) / base_frequency,
-                        rate=rate,
-                        data_type='freq',
-                        taus='all' # Use 'all' for better resolution around the target
-                    )
-                except Exception as e:
-                    print(f"Skipping {station_name} due to error in Allan deviation computation: {e}")
-                    continue
+                    # --- Compute OADEV ---
+                    try:
+                        taus, oadev, errors, _ = allantools.oadev(
+                            data=np.array(doppler_noise_hz) / base_frequency,
+                            rate=rate_fdets,
+                            data_type='freq',
+                            taus='decade'
+                        )
+                    except Exception as e:
+                        print(f"Skipping {station_name} on {date} due to error in Allan deviation computation: {e}")
+                        continue
 
-                if len(taus) == 0:
-                    print(f"Skipping {station_name}: ADEV computation returned no data.")
-                    continue
+                    if len(taus) == 0:
+                        print(f"Skipping {station_name} on {date}: ADEV computation returned no data.")
+                        continue
 
-                # --- Find the ADEV value closest to the target tau ---
-                # np.argmin finds the index of the minimum value.
-                # By taking the absolute difference, we find the index of the tau closest to our target.
-                closest_tau_index = np.argmin(np.abs(taus - target_tau))
+                    tau_mask = np.ones_like(taus, dtype=bool)
+                    if tau_min is not None:
+                        tau_mask &= taus >= tau_min
+                    if tau_max is not None:
+                        tau_mask &= taus <= tau_max
 
-                adev_at_target = oadev[closest_tau_index]
-                error_at_target = errors[closest_tau_index]
-                actual_tau = taus[closest_tau_index]
+                    taus = taus[tau_mask]
+                    oadev = np.array(oadev)[tau_mask]
+                    errors = np.array(errors)[tau_mask]
 
-                results.append({
-                    'station': station_name,
-                    'target_tau': actual_tau, # Store the actual tau value found
-                    'adev_at_tau': adev_at_target,
-                    'error_at_tau': error_at_target
-                })
+                    # --- Find the ADEV value closest to the target tau ---
+                    closest_tau_index = np.argmin(np.abs(taus - target_tau))
+
+                    adev_at_target = oadev[closest_tau_index]
+                    error_at_target = errors[closest_tau_index]
+                    actual_tau = taus[closest_tau_index]
+
+                    if station_name == "Wb":
+                        print(oadev)
+                    print(station_name, oadev[np.argmax(oadev)], np.argmax(oadev), taus[np.argmax(oadev)])
+
+                    results.append({
+                        'date': date, # Add the date to the results
+                        'station': station_name,
+                        'target_tau': actual_tau,
+                        'adev_at_tau': adev_at_target,
+                        'error_at_tau': error_at_target
+                    })
 
             return pd.DataFrame(results)
 
 
         def plot_oadev_stations(self, extracted_data_list, mission_name, experiment_name = None, tau_min=None, tau_max=None, save_dir=None, suppress=False, color_regions=False):
             """
-            Plots Overlapping Allan Deviation (oadev) and saves one plot per unique date and corresponding data to CSV files.
+            Plots Overlapping Allan Deviation (oadev) and saves one plot per unique date
+            and corresponding data to CSV files.
+
+            *** THIS IS THE FIXED VERSION ***
+            It now correctly filters the data for each specific date before
+            computing the Allan deviation, matching the logic in compute_oadev_at_tau.
 
             Args:
                 extracted_data_list (list): List of extracted_data dicts, each containing:
@@ -3083,51 +3130,102 @@ class PrideDopplerCharacterization:
             if not isinstance(extracted_data_list, list):
                 extracted_data_list = [extracted_data_list]
 
-            # Extract all unique dates
+            # Extract all unique dates from all datasets
             unique_dates_set = set()
             for extracted_data in extracted_data_list:
-                utc_datetime = extracted_data['utc_datetime']
+                utc_datetime = extracted_data.get('utc_datetime', [])
                 unique_dates_set.update(day.strftime('%Y-%m-%d') for day in utc_datetime)
 
-            unique_dates_list = sorted(list(unique_dates_set))  # Chronological order
-            colors = cm.get_cmap('tab10', len(extracted_data_list))  # Unique colors per station
+            unique_dates_list = sorted(list(unique_dates_set)) # Chronological order
+
+            # Check if there are any dates to plot
+            if not unique_dates_list:
+                print("No dates found in the provided data. No plots will be generated.")
+                return
+
+            colors = cm.get_cmap('tab10', len(extracted_data_list)) # Unique colors per station
 
             if save_dir and not os.path.exists(save_dir):
                 os.makedirs(save_dir)
 
+            # --- Loop 1: For each unique DATE, create a new plot ---
             for date in unique_dates_list:
                 fig, ax = plt.subplots(figsize=(10, 5))
-                output_rows = []  # For CSV
+
+                # --- MODIFICATION 1: List to hold DataFrames for eventual CSV concat ---
+                all_station_dataframes = []
+
+                # A flag to check if any data was actually plotted on this figure
+                data_plotted_on_this_date = False
+
+                # --- Loop 2: For each STATION, add its data to the plot (if it has data for this date) ---
                 for i, extracted_data in enumerate(extracted_data_list):
                     color = colors(i)
-                    receiving_station_name = extracted_data['receiving_station_name']
-                    if receiving_station_name == 'O6':
-                        receiving_station_name == 'On'
-                    utc_datetime = extracted_data['utc_datetime']
-                    doppler_noise_hz = extracted_data['Doppler Noise [Hz]']
-                    frequency_detection = extracted_data['Freq detection [Hz]']
-                    base_frequency = extracted_data['base_frequency']
+                    receiving_station_name = extracted_data.get('receiving_station_name', 'Unknown')
+                    base_frequency = extracted_data.get('base_frequency')
 
-                    # Determine sampling rate
+                    if receiving_station_name == 'O6':
+                        receiving_station_name = 'On' # Typo fix from original code
+
+                    # --- FIX START: Filter data for the current 'date' of the plot ---
+
+                    # 1. Get the *full* data arrays for this station
+                    all_utc_datetimes = extracted_data.get('utc_datetime', [])
+                    all_doppler_noise = extracted_data.get('Doppler Noise [Hz]', [])
+
+                    if not all_utc_datetimes or not all_doppler_noise or not base_frequency:
+                        print(f"Skipping {receiving_station_name} on {date}: Missing essential data in block.")
+                        continue
+
+                    # 2. Create a boolean mask to find data matching the current plot's date
+                    #    (The 'date' variable comes from Loop 1)
+                    try:
+                        date_mask = np.array([dt.strftime('%Y-%m-%d') == date for dt in all_utc_datetimes])
+                    except Exception as e:
+                        print(f"Error creating date mask for {receiving_station_name} on {date}: {e}")
+                        continue
+
+                    # 3. Check if this station has *any* data on this date. If not, skip it.
+                    if not np.any(date_mask):
+                        continue
+
+                    # 4. Apply the mask to get *only* this date's data
+                    utc_datetime = np.array(all_utc_datetimes)[date_mask]
+                    doppler_noise_hz = np.array(all_doppler_noise)[date_mask]
+
+                    # --- FIX END ---
+
+                    # Now, 'utc_datetime' and 'doppler_noise_hz' contain data for *only* the current 'date'
+
+                    # Determine sampling rate (this now correctly uses only one day's data)
                     t_jd = np.array([Time(time).jd for time in utc_datetime])
                     diffs = np.diff(t_jd)
+
+                    if len(diffs) == 0:
+                        print(f"Skipping {receiving_station_name} on {date}: Not enough data points to determine rate.")
+                        continue
+
                     most_common_diff = Counter(diffs).most_common(1)
                     if not most_common_diff or most_common_diff[0][0] == 0:
-                        print(f"Skipping dataset {i+1}: Cannot determine sampling rate.")
+                        print(f"Skipping {receiving_station_name} on {date}: Cannot determine sampling rate.")
                         continue
 
                     rate_fdets = 1 / (most_common_diff[0][0] * 86400)
 
-                    # Compute oadev
+                    # Compute oadev (this now computes on the correct, single-day dataset)
                     try:
                         taus, oadev, errors, _ = allantools.oadev(
-                            np.array(doppler_noise_hz) / (base_frequency),
+                            np.array(doppler_noise_hz) / (base_frequency), # This is now the filtered data
                             rate=rate_fdets,
                             data_type='freq',
                             taus='decade'
                         )
                     except Exception as e:
-                        print(f"Skipping dataset {i+1} due to error in Allan deviation computation: {e}")
+                        print(f"Skipping {receiving_station_name} on {date} due to error in Allan deviation computation: {e}")
+                        continue
+
+                    if len(taus) == 0:
+                        print(f"Skipping {receiving_station_name} on {date}: ADEV computation returned no data.")
                         continue
 
                     # Filter tau range
@@ -3141,53 +3239,78 @@ class PrideDopplerCharacterization:
                     oadev = np.array(oadev)[tau_mask]
                     errors = np.array(errors)[tau_mask]
 
+                    if len(taus) == 0:
+                        print(f"Skipping {receiving_station_name} on {date}: No data left after tau filtering.")
+                        continue
 
-                    # Only use data from this date
-                    #date_data_mask = [d.strftime('%Y-%m-%d') == date for d in utc_datetime]
-                    #if not any(date_data_mask):
-                    #    continue
+                    if receiving_station_name == 'Wb':
+                        print(f"--- Plotting Wb on {date} ---")
+                        print(oadev) # This should now match the output from the other function
+
+                    # --- Print ADEV at first tau (which is ~10s) ---
+                    if len(taus) > 0:
+                        # The first tau is the one closest to 10s
+                        print(f"ADEV @ {taus[0]:.2f}s for {receiving_station_name} on {date}: {oadev[0]:.3e}")
 
                     # Plot
                     ax.errorbar(taus, oadev, yerr=errors, fmt='o', markersize=3, linestyle='dashed',
                                 color=color, label=receiving_station_name)
 
-                    # Save rows for CSV
-                    for t, m, e in zip(taus, oadev, errors):
-                        output_rows.append([t, m, e, receiving_station_name])
+                    data_plotted_on_this_date = True # Mark that we successfully plotted something
 
-                # Finalize plot
-                ax.set_xscale("log")
-                ax.set_yscale("log")
-                ax.set_xlabel('Averaging Time (s)')
-                ax.set_ylabel('Overlapping Allan Deviation')
-                if experiment_name in self.Utilities.experiments:
-                    ax.set_title(f'Mission {mission_name} on {date}, experiment {experiment_name}')
+                    # ---  Add this station's data to the list ---
+                    station_df = pd.DataFrame({
+                        'Tau (s)': taus,
+                        'OADEV': oadev,
+                        'Error': errors,
+                        'Station': receiving_station_name
+                    })
+                    all_station_dataframes.append(station_df)
+
+                # --- After looping through all stations for this date, finalize the plot ---
+
+                # Only finalize and save if we actually plotted data
+                if data_plotted_on_this_date:
+                    ax.set_xscale("log")
+                    ax.set_yscale("log")
+                    ax.set_xlabel('Averaging Time (s)')
+                    ax.set_ylabel('Overlapping Allan Deviation')
+
+                    if experiment_name and experiment_name in self.Utilities.experiments:
+                        ax.set_title(f'Mission {mission_name} on {date}, experiment {experiment_name}')
+                    else:
+                        ax.set_title(f'Mission {mission_name} on {date}')
+
+                    ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+                    ax.grid(True, which="both", ls="--", alpha=0.3)
+                    ax.minorticks_on()
+                    plt.tight_layout()
+
+                    # Save plot
+                    if save_dir:
+                        fig_path = os.path.join(save_dir, f"{mission_name}_{date}_oadev.png")
+                        plt.savefig(fig_path)
+
+                    if not suppress:
+                        plt.show()
+
+                    plt.close(fig) # Close the figure for this date
+
+                    # --- Save the formatted CSV ---
+                    if save_dir and all_station_dataframes:
+                        # Concatenate all station data for this date
+                        daily_df = pd.concat(all_station_dataframes)
+                        # Sort by Station, then Tau for readability
+                        daily_df = daily_df.sort_values(by=['Station', 'Tau (s)'])
+                        csv_path = os.path.join(save_dir, f"{mission_name}_{date}_oadev_data.csv")
+                        daily_df.to_csv(csv_path, index=False, float_format='%.6e')
+
                 else:
-                    ax.set_title(f'Mission {mission_name} on {date}')
-                ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
-                ax.grid(True, which="both", ls="--", alpha=0.3)
+                    # If no data was plotted (e.g., all stations were skipped), close the empty figure
+                    plt.close(fig)
+                    print(f"No data found for any station on {date}. Plot not generated.")
 
-                log_ticks_x = np.logspace(np.log10(taus[0]), np.log10(taus[-1]), num=10)
-                valid_xticks = np.searchsorted(taus, log_ticks_x)
-                valid_xticks = valid_xticks[valid_xticks < len(taus)]
-
-                ax.set_xticks(taus[valid_xticks])
-                ax.set_xlim(9, 110)
-                ax.set_xticklabels([f"{round(tick)}" for tick in taus[valid_xticks]])
-
-                plt.tight_layout()
-
-                # Save plot
-                if save_dir:
-                    fig_path = os.path.join(save_dir, f"{mission_name}_{date}_oadev.png")
-                    plt.savefig(fig_path)
-
-                if not suppress:
-                    plt.show()
-
-                plt.close()
-
-        def get_all_stations_oadev_plot(self, fdets_folder_path, mission_name, experiment_name = None, extracted_parameters_list = None, tau_min = None, tau_max = None, two_step_filter = True, save_dir = None):
+        def get_all_stations_oadev_plot(self, fdets_folder_path, mission_name, experiment_name = None, extracted_parameters_list = None, tau_min = None, tau_max = None, two_step_filter = True, save_dir = None, suppress = True):
 
             if not extracted_parameters_list:
                 extracted_parameters_list =list()
@@ -3208,7 +3331,7 @@ class PrideDopplerCharacterization:
                     experiment_name=experiment_name,
                     tau_min = tau_min,
                     tau_max = tau_max,
-                    suppress = False,
+                    suppress = suppress,
                     save_dir = save_dir)
             else:
                 self.plot_oadev_stations(
@@ -3216,8 +3339,9 @@ class PrideDopplerCharacterization:
                     mission_name = mission_name,
                     tau_min = tau_min,
                     tau_max = tau_max,
-                    suppress = False,
-                    save_dir = save_dir)
+                    suppress = suppress,
+                    save_dir = save_dir
+                )
 
         def get_all_outputs(self, root_folder, save_index = False, save_plots = False): # Function to process and save plots for each TXT file
 
@@ -4064,13 +4188,11 @@ class PrideDopplerCharacterization:
             if not extracted_parameters_list:
                 extracted_parameters_list =list()
                 directory_path = fdets_folder_path
-
                 for file in os.listdir(directory_path):
                     if file.startswith('Fdets') and file.endswith('.txt'):
                         file_path = os.path.join(directory_path, file)
 
                         print(f'Extracting data from {file}')
-
                         extracted_parameters = self.ProcessFdets.extract_parameters(file_path)
 
                         extracted_parameters_list.append(extracted_parameters)

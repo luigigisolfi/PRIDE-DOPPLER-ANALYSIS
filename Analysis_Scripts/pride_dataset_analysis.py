@@ -54,8 +54,9 @@ BAD_OBSERVATIONS_FLAG = True # if True, it 1) plots the observations as flagged 
 # Select preferred start date and end date to perform the analysis
 start_date = datetime.datetime(2000, 1, 1, tzinfo=timezone.utc)
 end_date =  datetime.datetime(2024, 12, 31, tzinfo=timezone.utc)
-missions_to_analyse = ['jui'] # select only the preferred mission names for which to perform the analysis
-root_dir = f'../analysed_pride_data' # change this to your folder containing PRIDE data
+missions_to_analyse = ['jui', 'mro', 'min', 'mex', 'vex']
+root_dir = '/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/analysed_pride_data'
+#root_dir = f'../analysed_pride_data' # change this to your folder containing PRIDE data
 yymm_folders_to_consider = utilities.list_yymm(start_date, end_date)
 months_list = list(yymm_folders_to_consider.keys())
 days_list = [item for sublist in yymm_folders_to_consider.values() for item in sublist]
@@ -104,6 +105,7 @@ for mission_name, yymmdds in yymmdd_folders_per_mission.items():
     for yymmdd_folder, experiment_name in zip(yymmdd_folders, experiment_names):
         # Update the path construction
         fdets_folder_path = f'{root_dir}/{mission_name}/{yymmdd_folder}/input/'
+        print(fdets_folder_path)
         output_dir = f'{root_dir}/{mission_name}/{yymmdd_folder}/output/'
 
         if RUN_EXPERIMENTS_STATISTICS_FLAG:
@@ -123,7 +125,6 @@ for mission_name, yymmdds in yymmdd_folders_per_mission.items():
             extracted_data_list = process_fdets.extract_folder_data(dir_path)
 
             output_file_path = os.path.join(output_dir, f"oadev_at_10s.txt")
-            oadev10s_dict = analysis.compute_oadev_at_tau(extracted_data_list, target_tau=10.0)
 
             # Uncomment the following line to plot the filtered data in the outputs (instead of the original PRIDE data).
             #extracted_data_list = analysis.two_step_filter(extracted_data_list)
@@ -208,8 +209,10 @@ for mission_name, yymmdds in yymmdd_folders_per_mission.items():
             tau_min = 0
             tau_max = 100
             save_dir = output_dir
-            suppress = False
-            analysis.get_all_stations_oadev_plot(fdets_folder_path, mission_name, experiment_name, tau_min = tau_min, tau_max = tau_max, two_step_filter = True, save_dir = output_dir)
+            suppress = True
+            analysis.get_all_stations_oadev_plot(fdets_folder_path, mission_name, experiment_name, tau_min = tau_min, tau_max = tau_max, two_step_filter = True, save_dir = output_dir, suppress = suppress)
+
+            oadev10s_dict = analysis.compute_oadev_at_tau(extracted_data_list, target_tau=10.0, tau_min = tau_min, tau_max = tau_max, two_step_filter= True)
 
             with open(output_file_path, "w") as f:
                 # Write a header for clarity
@@ -225,6 +228,7 @@ for mission_name, yymmdds in yymmdd_folders_per_mission.items():
                         f"{row['adev_at_tau']:.4e}   | "
                         f"{row['error_at_tau']:.4e}\n"
                     )
+                f.write(f"OADEV Range: {oadev10s_dict['adev_at_tau'].min():.4e} - {oadev10s_dict['adev_at_tau'].max():.4e}\n")
         # Set colors for plotting (based on mission name)
         if mission_name == 'vex':
             color_dict[experiment_name] = 'red'
