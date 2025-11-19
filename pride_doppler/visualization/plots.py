@@ -1,0 +1,288 @@
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import seaborn as sns
+import os
+from astroquery.jplhorizons import Horizons
+from datetime import datetime
+from ..core.constants import ID_TO_SITE, STATION_GEODETIC_POSITIONS
+from ..analysis.allan import compute_oadev
+from matplotlib.ticker import MaxNLocator
+from ..core.types import FdetsData
+from matplotlib.ticker import ScalarFormatter
+
+def plot_user_parameters(data, save_dir=None, suppress=False):
+    """Standard SNR, Doppler, Fdets time series plot."""
+    fig, axs = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
+    fig.subplots_adjust(hspace=0.3)
+
+    # SNR
+    axs[0].plot(data.utc_datetime, data.signal_to_noise, '+-', color='blue', lw=0.5, markersize=5)
+    axs[0].set_ylabel('SNR')
+    axs[0].grid(True)
+    axs[0].set_title(f"Station: {data.receiving_station_name} | Date: {data.utc_date}")
+
+    # Doppler
+    axs[1].plot(data.utc_datetime, data.doppler_noise_hz*1000, '+-', color='orange', lw=0.5, markersize=5)
+    axs[1].set_ylabel('Doppler Noise [mHz]')
+    axs[1].grid(True)
+
+    # Fdets
+    axs[2].plot(data.utc_datetime, data.frequency_detection, 'o', color='black', markersize=2)
+    axs[2].set_ylabel('Freq Det [Hz]')
+    axs[2].set_xlabel('UTC Time')
+    axs[2].grid(True)
+
+    # Format Date Axis
+    axs[2].xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+    plt.setp(axs[2].xaxis.get_majorticklabels(), rotation=45)
+
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+        # Match original naming convention for compatibility with combine_plots
+        fname = f"{data.receiving_station_name}_{data.utc_date}_params.png"
+        plt.savefig(os.path.join(save_dir, fname))
+
+    if not suppress: plt.show()
+    plt.close(fig)
+
+def get_elevation_plot(data_list, target_name, mission_name, save_dir=None, suppress=True):
+    """
+    Queries JPL Horizons and plots elevation for the given stations.
+    """
+    if not data_list: return
+
+    plt.figure(figsize=(12, 7))
+
+    # To store text data for saving
+    txt_output_lines = ["# Time (UTC) | Elevation (deg)"]
+
+    for data in data_list:
+        station_id = data.receiving_station_name
+        site_name = ID_TO_SITE.get(station_id)
+
+        if not site_name or site_name not in STATION_GEODETIC_POSITIONS:
+            print(f"Skipping elevation for unknown station: {station_id}")
+            continue
+
+        # Get Coordinates [Alt, Lat, Lon]
+        geo = STATION_GEODETIC_POSITIONS[site_name]
+        # Horizons expects: lon, lat, elevation(km)
+        location = {'lon': geo[2], 'lat': geo[1], 'elevation': geo[0]/1000.0}
+
+        # Define time range
+        start = data.utc_datetime[0].strftime("%Y-%m-%d %H:%M")
+        stop = data.utc_datetime[-1].strftime("%Y-%m-%d %H:%M")
+
+        try:
+            obj = Horizons(id=target_name, location=location, epochs={'start': start, 'stop': stop, 'step': '1m'})
+            eph = obj.ephemerides()
+
+            # Convert Horizons time to datetime
+            times = [datetime.strptime(str(t), "%Y-%b-%d %H:%M") for t in eph['datetime_str']]
+            elevations = eph['EL']
+
+            plt.plot(times, elevations, label=f"{station_id} ({site_name})")
+
+            # Prepare text output (just for the first station for simplicity, or append all)
+            for t, el in zip(times, elevations):
+                txt_output_lines.append(f"{t} | {el:.2f}")
+
+        except Exception as e:
+            print(f"Horizons Query Failed for {station_id}: {e}")
+
+    plt.ylabel("Elevation [deg]")
+    plt.xlabel("UTC Time")
+    plt.title(f"Elevation: {target_name} ({mission_name})")
+    plt.legend()
+    plt.grid(True)
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+        # Determine filename based on first dataset
+        ref = data_list[0]
+        fname = f"{ref.receiving_station_name}_{ref.utc_date}_elevation.png"
+        plt.savefig(os.path.join(save_dir, fname))
+
+        # Save txt
+        txt_name = fname.replace('.png', '.txt')
+        with open(os.path.join(save_dir, txt_name), 'w') as f:
+            f.write('\n'.join(txt_output_lines))
+
+    if not suppress: plt.show()
+    plt.close()
+
+def plot_histograms(data_list, param='snr', save_dir=None, suppress=True):
+    """
+    Plots distributions for SNR or Doppler Noise using Seaborn.
+    param: 'snr' or 'doppler'
+    """
+    import pandas as pd
+
+    plot_data = []
+    for data in data_list:
+        arr = data.signal_to_noise if param == 'snr' else data.doppler_noise_hz
+        for val in arr:
+            plot_data.append({'Value': val, 'Station': data.receiving_station_name})
+
+    if not plot_data: return
+
+    df = pd.DataFrame(plot_data)
+
+    plt.figure(figsize=(10, 6))
+    sns.displot(df, x="Value", hue="Station", kind="kde", fill=True)
+
+    plt.title(f"{param.upper()} Distribution")
+    if param == 'snr': plt.xscale('log')
+
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+        plt.savefig(os.path.join(save_dir, f"all_stations_{param}_dist.png"))
+
+    if not suppress: plt.show()
+    plt.close()
+
+def plot_allan_deviation(data_list: list, title: str, save_path: str = None, suppress: bool = False):
+    """
+    Computes and plots the Allan Deviation for a list of FdetsData objects.
+    X-axis is formatted as integers (1, 10, 100) instead of scientific notation.
+    """
+    plt.figure(figsize=(10, 6))
+
+    for data in data_list:
+        # Use the dedicated analysis function
+        # Ensure compute_oadev is imported in your script
+        taus, oadev, err = compute_oadev(data, tau_min=1, tau_max=1000)
+        if taus is not None and len(taus) > 0:
+            plt.loglog(taus, oadev, '.-', label=data.receiving_station_name)
+
+    plt.grid(True, which="both", ls="--", alpha=0.5)
+    plt.xlabel("Averaging Time (τ) [s]")
+    plt.ylabel("Overlapping Allan Deviation")
+    plt.legend()
+    plt.title(title)
+
+    # --- FORMATTING CHANGE ---
+    ax = plt.gca()
+    # Force the x-axis to use a standard Scalar Formatter
+    ax.xaxis.set_major_formatter(ScalarFormatter())
+    # Disable scientific notation (e.g., 1e2)
+    ax.ticklabel_format(style='plain', axis='x')
+    # -------------------------
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        print(f"  > Allan Deviation plot saved to: {os.path.basename(save_path)}")
+
+    if not suppress:
+        plt.show()
+
+    plt.close()
+
+
+def plot_filter_comparison(original_data: FdetsData, filtered_data: FdetsData, save_path: str = None, suppress: bool = False):
+    """
+    Creates a 2-panel plot comparing original vs. Z-score filtered data for SNR and Doppler noise.
+    This version now includes the percentage of data retained in the legend.
+
+    Args:
+        original_data (FdetsData): The FdetsData object containing the raw, unfiltered data.
+        filtered_data (FdetsData): The FdetsData object after filtering has been applied.
+        save_path (str, optional): Path to save the output plot.
+        suppress (bool, optional): If True, does not display the plot.
+    """
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
+    fig.subplots_adjust(hspace=0.3)
+    # =====================================================================
+    # --- NEW: Calculate the percentage of retained data ---
+    # =====================================================================
+    num_original = len(original_data.utc_datetime)
+    num_filtered = len(filtered_data.utc_datetime)
+
+    # Avoid division by zero if the original data is empty
+    retained_percentage = (num_filtered / num_original) * 100 if num_original > 0 else 0.0
+    # =====================================================================
+
+    # --- 1. SNR Comparison Plot ---
+    ax1.plot(original_data.utc_datetime, original_data.signal_to_noise,
+             label='Original SNR', marker='o', linestyle='-', color='blue',
+             markersize=3, linewidth=0.5, alpha=0.7)
+
+    # --- Add the retained percentage to the label ---
+    ax1.plot(filtered_data.utc_datetime, filtered_data.signal_to_noise,
+             label=f'Filtered SNR (Retained: {retained_percentage:.2f}%)',
+             marker='x', linestyle='None', color='orange',
+             markersize=5, alpha=0.9)
+
+    ax1.set_title(f"Filter Comparison | Station: {original_data.receiving_station_name} | Date: {original_data.utc_date}")
+    ax1.set_ylabel('Signal-to-Noise Ratio (SNR)')
+    ax1.grid(True)
+    ax1.legend()
+
+    # --- 2. Doppler Noise Comparison Plot ---
+    # Convert to mHz for plotting
+    ax2.plot(original_data.utc_datetime, original_data.doppler_noise_hz * 1000,
+             label='Original Doppler Noise', marker='o', linestyle='-', color='blue',
+             markersize=3, linewidth=0.5, alpha=0.7)
+
+    # --- FIX: Add the percentage to the label ---
+    ax2.plot(filtered_data.utc_datetime, filtered_data.doppler_noise_hz * 1000,
+             label=f'Filtered Doppler Noise (Retained: {retained_percentage:.2f}%)',
+             marker='x', linestyle='None', color='orange',
+             markersize=5, alpha=0.9)
+
+    ax2.set_xlabel(f'UTC Time')
+    ax2.set_ylabel('Doppler Noise [mHz]')
+    ax2.grid(True)
+    ax2.legend()
+
+    # --- Formatting ---
+    ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+    locator = MaxNLocator(prune='both', nbins=20)
+    ax2.xaxis.set_major_locator(locator)
+    plt.setp(ax2.get_xticklabels(), rotation=45, ha="right")
+
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path)
+        print(f"  > Filter comparison plot saved to: {os.path.basename(save_path)}")
+
+    if not suppress:
+        plt.show()
+
+    plt.close(fig)
+
+def plot_elevation_profile(times, elevations, station_name, mission_name, save_dir=None, suppress=True):
+    """
+    Pure plotting function. No queries, no calculations.
+    """
+    if times is None or elevations is None:
+        return
+
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    ax.plot(times, elevations, label=station_name)
+
+    ax.set_ylabel("Elevation [deg]")
+    ax.set_xlabel("UTC Time")
+    ax.set_title(f"Elevation Profile: {mission_name} - {station_name}")
+    ax.grid(True)
+    ax.legend()
+
+    # Format Time Axis
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+        # Assuming times[0] is a datetime object for the filename
+        date_str = times[0].strftime("%Y-%m-%d")
+        fname = f"{station_name}_{date_str}_elevation.png"
+        plt.savefig(os.path.join(save_dir, fname))
+
+    if not suppress:
+        plt.show()
+
+    plt.close(fig)

@@ -46,8 +46,8 @@ analysis = pride.Analysis(process_fdets, utilities) # create Analysis Object
 ############################################################ SET THE FLAGS ###########################################################################
 RUN_EXPERIMENTS_STATISTICS_FLAG = True # if True, creates the outputs from which the analysis is carried out.
 ALLAN_DEVIATIONS_FLAG = True # if True, creates and shows the Overlapping Allan Deviation plots.
-PLOT_GAUSSIAN_FLAG = False # if True, it plots the best fit Gaussian on top of Doppler noise distribution
-COMPARE_FILTERS_FLAG = False # if True, it plots the original data vs the z-score filtered one.
+PLOT_GAUSSIAN_FLAG = True # if True, it plots the best fit Gaussian on top of Doppler noise distribution
+COMPARE_FILTERS_FLAG = True # if True, it plots the original data vs the z-score filtered one.
 BAD_OBSERVATIONS_FLAG = True # if True, it 1) plots the observations as flagged and 2) removes them from the final statistics for mean FoM computation
 ######################################################################################################################################################
 
@@ -214,7 +214,7 @@ for mission_name, yymmdds in yymmdd_folders_per_mission.items():
 
             # The following line creates an additional file with
             # oadev at tau = 10 s only (the get_all_stations_oadev_plot function creates a file with oadev at all taus)
-            #oadev10s_dict = analysis.compute_oadev_at_tau(extracted_data_list, target_tau=10.0, tau_min = tau_min, tau_max = tau_max, two_step_filter= True)
+            oadev10s_dict = analysis.compute_oadev_at_tau(extracted_data_list, target_tau=10.0, tau_min = tau_min, tau_max = tau_max, two_step_filter= True)
 
             with open(output_file_path, "w") as f:
                 # Write a header for clarity

@@ -12,8 +12,7 @@ dependencies:
   - seaborn
   - regex
   - astropy
-  - pillow  # for PIL
+  - pillow
   - allantools
   - astroquery
-  - pip:
-      - regex
+  - streamlit
