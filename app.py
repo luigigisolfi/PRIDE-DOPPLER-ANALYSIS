@@ -8,7 +8,7 @@ from matplotlib.ticker import ScalarFormatter
 from scipy.stats import norm
 import seaborn as sns
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+import random
 # --- LIBRARY IMPORTS ---
 from pride_doppler.io.fdets import extract_parameters
 from pride_doppler.analysis.processing import filter_data_zscore
@@ -83,7 +83,7 @@ def get_time_series_fig(data):
     axs[0].set_title(f"{data.receiving_station_name} - {data.utc_date}")
 
     axs[1].plot(data.utc_datetime, data.doppler_noise_hz*1e3, '+-', color='orange', lw=0.5, ms=5)
-    axs[1].set_ylabel('Doppler [mHz]'); axs[1].grid(True, alpha=0.3)
+    axs[1].set_ylabel('Doppler Noise [mHz]'); axs[1].grid(True, alpha=0.3)
 
     axs[2].plot(data.utc_datetime, data.frequency_detection/1e6, 'o', color='black', ms=2)
     axs[2].set_ylabel('Freq Det [MHz]'); axs[2].set_xlabel('UTC Time'); axs[2].grid(True, alpha=0.3)
@@ -94,53 +94,85 @@ def get_comparison_fig(raw, filtered):
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
     retention = (len(filtered.utc_datetime) / len(raw.utc_datetime)) * 100 if len(raw.utc_datetime) > 0 else 0
 
-    ax1.plot(raw.utc_datetime, raw.signal_to_noise, 'o', color='gray', ms=3, alpha=0.4, label='Removed')
-    ax1.plot(filtered.utc_datetime, filtered.signal_to_noise, '+-', color='blue', lw=0.5, ms=5, label=f'Kept ({retention:.1f}%)')
+    ax1.plot(raw.utc_datetime, raw.signal_to_noise, marker = 'o',  linestyle='-', color='blue', ms=2, lw = 0.5, label='Removed')
+    ax1.plot(filtered.utc_datetime, filtered.signal_to_noise, 'o', color='orange', lw=0.5, ms=2, label=f'Kept ({retention:.1f}%)', alpha = 0.5)
     ax1.set_ylabel("SNR"); ax1.legend(loc='upper right'); ax1.grid(True, alpha=0.3)
     ax1.set_title(f"{filtered.receiving_station_name} - {filtered.utc_date} (Raw vs Filtered)")
 
-    ax2.plot(raw.utc_datetime, raw.doppler_noise_hz*1e3, 'o', color='gray', ms=3, alpha=0.4)
-    ax2.plot(filtered.utc_datetime, filtered.doppler_noise_hz*1e3, '+-', color='orange', lw=0.5, ms=5, label='Kept')
-    ax2.set_ylabel("Doppler [mHz]"); ax2.grid(True, alpha=0.3)
+    ax2.plot(raw.utc_datetime, raw.doppler_noise_hz*1e3, marker = 'o',  linestyle='-', color='blue', ms=2, lw = 0.5, label='Removed')
+    ax2.plot(filtered.utc_datetime, filtered.doppler_noise_hz*1e3, 'o', color='orange', lw=0.5, ms=2, label='Kept', alpha = 0.5)
+    ax2.set_ylabel("Doppler Noise [mHz]"); ax2.grid(True, alpha=0.3)
 
-    ax3.plot(raw.utc_datetime, raw.frequency_detection/1e6, 'o', color='gray', ms=2, alpha=0.4)
-    ax3.plot(filtered.utc_datetime, filtered.frequency_detection/1e6, 'o', color='black', ms=2, label='Kept')
+    ax3.plot(raw.utc_datetime, raw.frequency_detection/1e6,'o', color='blue', ms=2, label='Removed')
+    ax3.plot(filtered.utc_datetime, filtered.frequency_detection/1e6, 'o', color='orange', ms=2, label='Kept', alpha = 0.5)
     ax3.set_ylabel("Freq Det [MHz]"); ax3.set_xlabel("UTC Time"); ax3.grid(True, alpha=0.3)
     ax3.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
     fig.autofmt_xdate()
     return fig
 
+def get_plot_color(mission, exp_name):
+    if mission == 'vex': return 'red'
+    if mission == 'mro': return 'black'
+    if mission == 'mex': return 'magenta'
+    if exp_name == 'ed045a': return 'blue'
+    if exp_name == 'ed045c': return 'cyan'
+    if exp_name == 'ed045e': return 'orangered'
+    # Random color generator
+    return "#{:06x}".format(random.randint(0, 0xFFFFFF))
+
 def get_mission_summary_plot(stats_df, color_by="Experiment"):
     if stats_df.empty: return None
+
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 14))
-    groups = stats_df[color_by].unique()
-    palette = sns.color_palette("bright", len(groups))
-    color_map = dict(zip(groups, palette))
+
     added_labels = set()
 
     for _, row in stats_df.iterrows():
+        # 1. Extract Data
         st_name = row['Station']
-        group_name = row[color_by]
+        # We need these specifically for your color function
+        curr_mission = row['Mission']
+        experiment_name = row['Experiment']
+
         snr = row['Mean SNR (dB)']
         rms = row['RMS Doppler (mHz)']
         el = row['Mean Elevation']
         diam = ANTENNA_DIAMETERS.get(st_name, 30)
-        color = color_map.get(group_name, 'black')
+
+        # 2. Get Color using your custom function
+        color = get_plot_color(curr_mission, experiment_name)
+
+        # 3. Determine Legend Label based on "color_by" selection
+        # This allows the user to toggle the Legend grouping (Mission vs Experiment)
+        # while keeping your specific color coding.
+        group_name = row[color_by]
         label = group_name if group_name not in added_labels else None
         added_labels.add(group_name)
 
         marker_style = {'fmt': 'o', 'markersize': 6, 'alpha': 0.6, 'color': color}
+
+        # 4. Plotting
+        # Plot 1: Station vs SNR
         ax1.errorbar(st_name, snr, label=label, **marker_style)
+
+        # Plot 2: SNR vs RMS Doppler
         ax2.errorbar(snr, rms, label=label, **marker_style)
         ax2.annotate(st_name, (snr, rms), fontsize=8, alpha=0.8, xytext=(5, 5), textcoords='offset points')
+
+        # Plot 3: Elevation vs SNR
         ms_scaled = 3 * diam / 10
         ax3.errorbar(el, snr, fmt='o', markersize=ms_scaled, alpha=0.6, color=color, label=label)
         ax3.annotate(st_name, (el, snr), fontsize=8, alpha=0.8, xytext=(5, 5), textcoords='offset points')
 
+    # 5. Formatting
     ax1.set_ylabel('SNR [dB]'); ax1.set_xlabel('Station Code'); ax1.grid(True)
+    # Legend is placed on top plot
     ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., title=color_by)
+
     ax2.set_ylabel('RMS Doppler [mHz]'); ax2.set_xlabel('SNR [dB]'); ax2.grid(True); ax2.set_yscale('log')
+
     ax3.set_ylabel('SNR [dB]'); ax3.set_xlabel('Elevation [deg]'); ax3.grid(True)
+
     plt.tight_layout()
     return fig
 

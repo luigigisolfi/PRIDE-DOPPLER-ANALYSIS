@@ -9,6 +9,16 @@ from ..analysis.allan import compute_oadev
 from matplotlib.ticker import MaxNLocator
 from ..core.types import FdetsData
 from matplotlib.ticker import ScalarFormatter
+import random
+def get_plot_color(mission, exp_name):
+    if mission == 'vex': return 'red'
+    if mission == 'mro': return 'black'
+    if mission == 'mex': return 'magenta'
+    if exp_name == 'ed045a': return 'blue'
+    if exp_name == 'ed045c': return 'cyan'
+    if exp_name == 'ed045e': return 'orangered'
+    # Random color generator
+    return "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
 def plot_user_parameters(data, save_dir=None, suppress=False):
     """Standard SNR, Doppler, Fdets time series plot."""

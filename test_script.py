@@ -22,7 +22,7 @@ from pride_doppler.visualization.plots import (
     plot_filter_comparison
 )
 from pride_doppler.analysis.geometry import compute_elevation_data
-from pride_doppler.visualization.plots import plot_elevation_profile
+from pride_doppler.visualization.plots import plot_elevation_profile, get_plot_color
 
 # --- CONFIGURATION ---
 RUN_EXPERIMENTS_STATISTICS_FLAG = True
@@ -34,7 +34,7 @@ COMPARE_FILTERS_FLAG = True
 # Dates & Paths
 start_date = datetime.datetime(2000, 1, 1, tzinfo=timezone.utc)
 end_date = datetime.datetime(2024, 12, 31, tzinfo=timezone.utc)
-missions_to_analyse = ['jui', 'mro', 'min', 'mex', 'vex']
+missions_to_analyse = ['jui']
 root_dir = '/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/analysed_pride_data'
 # --- HELPER: Experiment Lookup ---
 from pride_doppler.core.constants import EXPERIMENTS
@@ -236,7 +236,7 @@ from pride_doppler.core.constants import ANTENNA_DIAMETERS
 print("\nGenerating Summary Statistics and Plots...")
 
 # Initialize Summary Plot
-fig, axes = plt.subplots(3, 1, figsize=(10, 15), sharex=False)
+fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=False)
 ax1, ax2, ax3 = axes
 
 labels_snr = set()
@@ -245,16 +245,6 @@ count_bad = 0
 scans_to_remove = defaultdict(list)
 
 # Helper for colors (Ported from original logic)
-def get_plot_color(mission, exp_name):
-    if mission == 'vex': return 'red'
-    if mission == 'mro': return 'black'
-    if mission == 'mex': return 'magenta'
-    if exp_name == 'ed045a': return 'blue'
-    if exp_name == 'ed045c': return 'cyan'
-    if exp_name == 'ed045e': return 'orangered'
-    # Random color generator
-    return "#{:06x}".format(random.randint(0, 0xFFFFFF))
-
 # Configuration for Bad Data Filter
 BAD_OBSERVATIONS_MEAN_DOPPLER_FILTER = 0.005 # 5 mHz
 
