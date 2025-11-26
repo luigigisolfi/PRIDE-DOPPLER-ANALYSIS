@@ -3,7 +3,7 @@ import os
 
 def combine_plots(image_paths, output_dir, output_file_name, direction='vertical'):
     """
-    Stitches multiple images together (e.g., Time Series + Elevation).
+    Stitches multiple images together
     """
     if not image_paths: return
 
