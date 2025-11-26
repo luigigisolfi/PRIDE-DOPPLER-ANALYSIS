@@ -10,6 +10,7 @@ from matplotlib.ticker import MaxNLocator
 from ..core.types import FdetsData
 from matplotlib.ticker import ScalarFormatter
 import random
+import pandas as pd
 def get_plot_color(mission, exp_name):
     if mission == 'vex': return 'red'
     if mission == 'mro': return 'black'
@@ -48,9 +49,17 @@ def plot_user_parameters(data, save_dir=None, suppress=False):
 
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
-        # Match original naming convention for compatibility with combine_plots
         fname = f"{data.receiving_station_name}_{data.utc_date}_params.png"
         plt.savefig(os.path.join(save_dir, fname))
+
+        txt_name = fname.replace('.png', '.csv')
+        df_out = pd.DataFrame({
+            'UTC_Time': data.utc_datetime,
+            'SNR': data.signal_to_noise,
+            'Doppler_Noise_mHz': data.doppler_noise_hz,
+            'Frequency_Detections_Hz': data.frequency_detection
+        })
+        df_out.to_csv(os.path.join(save_dir, txt_name), sep=',', index=False)
 
     if not suppress: plt.show()
     plt.close(fig)
@@ -93,7 +102,7 @@ def get_elevation_plot(data_list, target_name, mission_name, save_dir=None, supp
 
             plt.plot(times, elevations, label=f"{station_id} ({site_name})")
 
-            # Prepare text output (just for the first station for simplicity, or append all)
+            print(times)
             for t, el in zip(times, elevations):
                 txt_output_lines.append(f"{t} | {el:.2f}")
 
@@ -147,12 +156,16 @@ def plot_histograms(data_list, param='snr', save_dir=None, suppress=True):
 
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
-        plt.savefig(os.path.join(save_dir, f"all_stations_{param}_dist.png"))
+        fname = f"all_stations_{param}_dist.png"
+        plt.savefig(os.path.join(save_dir, fname))
+
+        txt_name = fname.replace('.png', '.csv')
+        df.to_csv(os.path.join(save_dir, txt_name), sep=',', index=False)
 
     if not suppress: plt.show()
     plt.close()
 
-def plot_allan_deviation(data_list: list, title: str, save_path: str = None, suppress: bool = False):
+def plot_allan_deviation(data_list: list, title: str, save_dir: str = None, suppress: bool = False):
     """
     Computes and plots the Allan Deviation for a list of FdetsData objects.
     X-axis is formatted as integers (1, 10, 100) instead of scientific notation.
@@ -165,6 +178,13 @@ def plot_allan_deviation(data_list: list, title: str, save_path: str = None, sup
         taus, oadev, err = compute_oadev(data, tau_min=1, tau_max=1000)
         if taus is not None and len(taus) > 0:
             plt.loglog(taus, oadev, '.-', label=data.receiving_station_name)
+
+            if save_dir:
+                os.makedirs(save_dir, exist_ok=True)
+                # Construct a directory based on the save_path
+                txt_name = f"allan_deviation_{data.receiving_station_name}.csv"
+                df_out = pd.DataFrame({'Tau': taus, 'Overlapping Allan Deviation': oadev, 'Error': err})
+                df_out.to_csv(os.path.join(save_dir, txt_name), sep=',', index=False)
 
     plt.grid(True, which="both", ls="--", alpha=0.5)
     plt.xlabel("Averaging Time (τ) [s]")
@@ -180,8 +200,8 @@ def plot_allan_deviation(data_list: list, title: str, save_path: str = None, sup
     ax.ticklabel_format(style='plain', axis='x')
     # -------------------------
 
-    if save_path:
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    if save_dir:
+        save_path = os.path.join(save_dir, f'allan_deviations.png')
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"  > Allan Deviation plot saved to: {os.path.basename(save_path)}")
 
@@ -260,6 +280,26 @@ def plot_filter_comparison(original_data: FdetsData, filtered_data: FdetsData, s
         plt.savefig(save_path)
         print(f"  > Filter comparison plot saved to: {os.path.basename(save_path)}")
 
+        base_dir = os.path.dirname(save_path)
+        base_name = os.path.basename(save_path).replace('.png', '')
+
+        # Save Original
+        df_orig = pd.DataFrame({
+            'UTC': original_data.utc_datetime,
+            'SNR_Original': original_data.signal_to_noise,
+            'Doppler_Original': original_data.doppler_noise_hz
+        })
+        df_orig.to_csv(os.path.join(base_dir, f"{base_name}_original_data.csv"), sep=',', index=False)
+
+        # Save Filtered
+        df_filt = pd.DataFrame({
+            'UTC': filtered_data.utc_datetime,
+            'SNR_Filtered': filtered_data.signal_to_noise,
+            'Doppler_Filtered': filtered_data.doppler_noise_hz
+        })
+
+        df_filt.to_csv(os.path.join(base_dir, f"{base_name}_filtered_data.csv"), sep=',', index=False)
+
     if not suppress:
         plt.show()
 
@@ -291,6 +331,15 @@ def plot_elevation_profile(times, elevations, station_name, mission_name, save_d
         date_str = times[0].strftime("%Y-%m-%d")
         fname = f"{station_name}_{date_str}_elevation.png"
         plt.savefig(os.path.join(save_dir, fname))
+
+        csv_name = fname.replace('.png', '.csv')
+
+        df_out = pd.DataFrame({
+            'UTC_Time': times,
+            'Elevation_deg': elevations
+        })
+
+        df_out.to_csv(os.path.join(save_dir, csv_name), sep=',', index=False)
 
     if not suppress:
         plt.show()

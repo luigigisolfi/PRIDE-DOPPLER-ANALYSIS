@@ -23,6 +23,8 @@ from pride_doppler.visualization.plots import (
 )
 from pride_doppler.analysis.geometry import compute_elevation_data
 from pride_doppler.visualization.plots import plot_elevation_profile, get_plot_color
+import random
+from pride_doppler.core.constants import ANTENNA_DIAMETERS
 
 # --- CONFIGURATION ---
 RUN_EXPERIMENTS_STATISTICS_FLAG = True
@@ -34,8 +36,8 @@ COMPARE_FILTERS_FLAG = True
 # Dates & Paths
 start_date = datetime.datetime(2000, 1, 1, tzinfo=timezone.utc)
 end_date = datetime.datetime(2024, 12, 31, tzinfo=timezone.utc)
-missions_to_analyse = ['jui']
-root_dir = '/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/analysed_pride_data'
+missions_to_analyse = ['min']
+root_dir = '/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/'
 # --- HELPER: Experiment Lookup ---
 from pride_doppler.core.constants import EXPERIMENTS
 from datetime import datetime, timezone
@@ -218,7 +220,7 @@ for mission, days in yymmdd_folders_per_mission.items():
             plot_allan_deviation(
                 data_list=filtered_data_list, # Use the list of all (filtered) stations
                 title=f"Allan Deviation - {folder_name}",
-                save_path=os.path.join(output_dir, 'oadev_summary.png'),
+                save_dir=os.path.join(output_dir, 'allan_deviations'),
                 suppress=True
             )
 
@@ -230,15 +232,17 @@ print("Run Complete.")
 # =============================================================================
 # 4. SUMMARY PLOTTING & STATISTICS PHASE
 # =============================================================================
-import random
-from pride_doppler.core.constants import ANTENNA_DIAMETERS
-
 print("\nGenerating Summary Statistics and Plots...")
 
 # Initialize Summary Plot
-fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=False)
-ax1, ax2, ax3 = axes
+fig, axes = plt.subplots(2, 1, figsize=(12, 10), sharex=False)
+ax1, ax2 = axes
 
+#########################################################################################################
+# OPTIONALLY ADD MEAN ELEVATION PLOT (NEEDS IMPROVEMENT BECAUSE "MEAN ELEVATION IS NOT A GOOD Figure of Merit")
+#fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=False)
+#ax1, ax2, ax3 = axes
+########################################################################################################
 labels_snr = set()
 count = 0
 count_bad = 0
@@ -247,7 +251,7 @@ scans_to_remove = defaultdict(list)
 # Helper for colors (Ported from original logic)
 # Configuration for Bad Data Filter
 BAD_OBSERVATIONS_MEAN_DOPPLER_FILTER = 0.005 # 5 mHz
-
+skip_elevation = True
 # --- A. Main Plotting Loop ---
 for experiment_name, station_list in mean_rms_stats.items():
 
@@ -296,9 +300,12 @@ for experiment_name, station_list in mean_rms_stats.items():
             if is_bad:
                 ax2.annotate(station, (mean_snr, rms_doppler_mhz), fontsize=7, alpha=0.7)
 
+            ########################################################################################################
+            # OPTIONALLY ADD MEAN ELEVATION PLOT (NEEDS IMPROVEMENT BECAUSE "MEAN ELEVATION IS NOT A GOOD Figure of Merit")
             # 3. Elevation vs SNR
-            ax3.errorbar(mean_elevation, mean_snr, label=label, markersize=3 * diam / 10, fmt='o', alpha=0.6, color=color)
-            ax3.annotate(station, (mean_elevation, mean_snr), fontsize=7, alpha=0.7)
+            #ax3.errorbar(mean_elevation, mean_snr, label=label, markersize=3 * diam / 10, fmt='o', alpha=0.6, color=color)
+            #ax3.annotate(station, (mean_elevation, mean_snr), fontsize=7, alpha=0.7)
+            ########################################################################################################
 
             # Only label the legend once per experiment
             if label: label = None
@@ -320,10 +327,13 @@ ax2.set_ylabel('RMS Doppler Noise [mHz]')
 ax2.grid(True)
 ax2.set_yscale('log')
 
+########################################################################################################
+# OPTIONALLY ADD MEAN ELEVATION PLOT (NEEDS IMPROVEMENT BECAUSE "MEAN ELEVATION IS NOT A GOOD Figure of Merit")
 # Subplot 3
-ax3.set_xlabel('Elevation [deg]')
-ax3.set_ylabel('SNR [dB]')
-ax3.grid(True)
+#ax3.set_xlabel('Elevation [deg]')
+#ax3.set_ylabel('SNR [dB]')
+#ax3.grid(True)
+########################################################################################################
 
 plt.tight_layout(pad=2)
 plt.savefig(os.path.join(root_dir, 'final_mission_summary.png'))
