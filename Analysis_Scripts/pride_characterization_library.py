@@ -55,7 +55,7 @@ class PrideDopplerCharacterization:
     # Function to extract data from the file
     class ProcessFdets:
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.result = 0
             self.Utilities = PrideDopplerCharacterization.Utilities()
             self.Analysis = PrideDopplerCharacterization.Analysis(self, self.Utilities)
@@ -64,7 +64,7 @@ class PrideDopplerCharacterization:
         ########################################################################################################################################
         ########################################################################################################################################
 
-        def get_observation_date(self, filename):
+        def get_observation_date(self, filename: str) -> str | None:
             """
             Retrieves the observation date from a given file. The function first attempts to extract the date from the header line. If unsuccessful, it tries alternative methods based on the column names in the data.
 
@@ -118,7 +118,7 @@ class PrideDopplerCharacterization:
         ########################################################################################################################################
         ########################################################################################################################################
 
-        def get_base_frequency(self, filename):
+        def get_base_frequency(self, filename: str) -> float:
             """
             Extracts the base frequency from the given file. The function first ensures that a valid observation
             date is present in the file before attempting to retrieve the base frequency.
@@ -163,7 +163,7 @@ class PrideDopplerCharacterization:
             ########################################################################################################################################
         ########################################################################################################################################
 
-        def get_station_name_from_file(self, fdets_file_name):
+        def get_station_name_from_file(self, fdets_file_name: str) -> str | None:
             """
                 Extracts the station name from the given file name based on a predefined pattern.
 
@@ -185,7 +185,7 @@ class PrideDopplerCharacterization:
             else:
                 return None
 
-        def get_columns_names(self, filename):
+        def get_columns_names(self, filename: str) -> dict[str, float | str]:
             """
                 Extracts column names from the third line of a given file and determines the number of columns present.
                 The function supports two formats with either 5 or 6 columns and assigns appropriate column names.
@@ -278,7 +278,7 @@ class PrideDopplerCharacterization:
 
 
 
-        def extract_parameters(self, filename):
+        def extract_parameters(self, filename: str) -> dict[str, float | str]:
 
 
             """
@@ -383,7 +383,7 @@ class PrideDopplerCharacterization:
         ########################################################################################################################################
         ########################################################################################################################################
 
-        def parse_datetime(self, t):
+        def parse_datetime(self, t: str) -> datetime:
             """
 
             Utility function to parse different time formats, as various missions or experiments might utilize different formats. This function attempts to convert a given time string into a datetime object by trying several predefined formats until a match is found.
@@ -415,7 +415,7 @@ class PrideDopplerCharacterization:
 
             raise ValueError(f"Time format not recognized: {t}")
 
-        def extract_folder_data(self,fdets_folder_path):
+        def extract_folder_data(self,fdets_folder_path: str) -> list[dict[str, float | str]]:
             """
             Extracts parameters from text files in a specified folder. The function scans the given directory for files that start with 'Fdets' and end with '.txt', and extracts parameters from each of these files using a separate method. The extracted parameters are collected into a list and returned.
 
@@ -444,7 +444,7 @@ class PrideDopplerCharacterization:
 
     class Utilities:
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.result = 0
             """
             Define dictionary for miscellaneous experiments. 
@@ -822,7 +822,7 @@ class PrideDopplerCharacterization:
         ########################################################################################################################################
         ########################################################################################################################################
 
-        def parse_experiment_time(self, time_str):
+        def parse_experiment_time(self, time_str: str) -> datetime:
             """Convert time string like '2020y053d01h30m00s' to a timezone-aware UTC datetime object."""
             match = re.match(r"(\d{4})y(\d{3})d(\d{2})h(\d{2})m(\d{2})s", time_str)
             if not match:
@@ -832,7 +832,7 @@ class PrideDopplerCharacterization:
 
             return datetime_value.replace(tzinfo=timezone.utc)
 
-        def find_experiment_from_yymmdd(self, yymmdd_str):
+        def find_experiment_from_yymmdd(self, yymmdd_str: str) -> str | None:
             """
 
             Check if a yymmdd string falls into any experiment interval.
@@ -856,7 +856,7 @@ class PrideDopplerCharacterization:
                 else:
                     return None
 
-        def datetime_to_yymmdd(self,datetime_value):
+        def datetime_to_yymmdd(self,datetime_value: datetime) -> str:
             """
             Convert a datetime object to 'YYMMDD' format.
 
@@ -876,7 +876,7 @@ class PrideDopplerCharacterization:
                 datetime_value = datetime_value.astimezone(timezone.utc)
 
             return datetime_value.strftime("%y%m%d")
-        def list_yymm(self, start_date: datetime, end_date: datetime):
+        def list_yymm(self, start_date: datetime, end_date: datetime) -> dict[str, list[str]]:
             """
             Return a dictionary {yymm: [list of yymmdd]} for each day between start_date and end_date inclusive.
 
@@ -907,7 +907,7 @@ class PrideDopplerCharacterization:
 
             return yymm_dict
 
-        def mjd_to_utc(self,mjd):
+        def mjd_to_utc(self,mjd: float) -> datetime.date:
             """
 
             Converts a Modified Julian Date (MJD) to a UTC date. The function uses a reference date of 17 November 1858, which is the starting point for MJD calculations. It adds the number of days represented by the MJD to this reference date to compute the corresponding UTC date.
@@ -932,7 +932,7 @@ class PrideDopplerCharacterization:
         ########################################################################################################################################
         ########################################################################################################################################
 
-        def utc_to_mjd(self, utc_date_str):
+        def utc_to_mjd(self, utc_date_str: str) -> float:
             """
             Converts a UTC date string in the format YYYY.MM.DD to a Modified Julian Date (MJD). The function calculates the difference in days between the given UTC date and the reference date of 17 November 1858, which marks the start of MJD.
 
@@ -955,11 +955,11 @@ class PrideDopplerCharacterization:
             # Calculate the difference in days between the UTC date and the MJD start
             delta = utc_date - mjd_start
 
-            # Return the MJD date
+            # Return float MJD date
             return delta.days + (delta.seconds / 86400.0)
 
 
-        def mission_name_to_horizons_target(self, mission_name):
+        def mission_name_to_horizons_target(self, mission_name: str) -> str | None:
             """
 
             Maps a mission name to its corresponding Horizons target identifier. The function uses a predefined dictionary that associates mission names with their respective target values. It performs a case-insensitive lookup for the provided mission name and returns the associated target identifier.
@@ -1003,7 +1003,7 @@ class PrideDopplerCharacterization:
         ########################################################################################################################################
         ########################################################################################################################################
 
-        def mjd_utc_seconds_to_utc(self,mjd, utc_seconds):
+        def mjd_utc_seconds_to_utc(self,mjd: float, utc_seconds: float) -> datetime.datetime:
 
             """
 
@@ -1045,7 +1045,7 @@ class PrideDopplerCharacterization:
             # Return the full UTC date and time
             return final_utc
 
-        def combine_plots(self, image_paths, output_dir, output_file_name, direction='vertical'):
+        def combine_plots(self, image_paths: list[str], output_dir: str, output_file_name: str, direction='vertical') -> None:
             """
 
             Combines multiple images into a single image by stacking them either horizontally or vertically. The function resizes the images to ensure uniformity in dimensions before combining them, and it saves the resulting image to the specified directory.
@@ -1116,7 +1116,7 @@ class PrideDopplerCharacterization:
 
         ################################################################################################################################################################################################################################################################################
 
-        def format_observation_time(self, observation_date, time_in_seconds):
+        def format_observation_time(self, observation_date: str, time_in_seconds: float) -> datetime.datetime:
             """
             Formats an observation date and a time in seconds into a complete datetime object. The function converts the observation date from a string format to a datetime object, splits the time in seconds into its integer and fractional components, and combines them to produce a full datetime representation.
 
@@ -1154,7 +1154,7 @@ class PrideDopplerCharacterization:
             # Return the formatted date-time in the desired format
             return datetime.strptime(str(full_datetime), "%Y-%m-%d %H:%M:%S")
 
-        def extract_ground_station_dict(self, file_path):
+        def extract_ground_station_dict(self, file_path: str) -> dict[str, dict[str, str]]:
             """
 
             Extracts ground station configuration data from a specified file and parses it into a nested dictionary. The function identifies a section in the file that contains ground station information, retrieves key-value pairs associated with each station, and organizes them into a dictionary format.
@@ -1210,7 +1210,7 @@ class PrideDopplerCharacterization:
                 print(f"File not found: {file_path}")
                 return None
 
-        def site_to_ID(self, site):
+        def site_to_ID(self, site: str) -> str:
             """
             Maps a ground station name to its corresponding site ID.
 
@@ -1270,7 +1270,7 @@ class PrideDopplerCharacterization:
             return site_to_id_mapping.get(site, None)
 
 
-        def ID_to_site(self, site_ID):
+        def ID_to_site(self, site_ID: str) -> str:
 
             """
             Maps a site ID to its corresponding ground station name.
@@ -1332,7 +1332,7 @@ class PrideDopplerCharacterization:
             return id_to_site_mapping.get(site_ID, None)
 
 
-        def site_to_geodetic_position(self, station_name):
+        def site_to_geodetic_position(self, station_name: str) -> tuple[float, float, float]:
 
             """
             Description
@@ -2422,7 +2422,7 @@ class PrideDopplerCharacterization:
 
             return site_to_geodetic_position_mapping.get(station_name, None)
 
-        def average_scan_lines(self, input_folder, fdets_file, time_interval_seconds, output_folder):
+        def average_scan_lines(self, input_folder: str, fdets_file: str, time_interval_seconds: float, output_folder: str) -> str:
             """
             Averages values of a time-series file over a given time interval. However, this is not good whern it comes to averaging the noise,
             since the noise can have both negative and positive values, thus effectively bringing the mean value to unrealistic values.
@@ -2504,7 +2504,7 @@ class PrideDopplerCharacterization:
             return output_filepath
 
 
-        def split_scan_by_time(self, input_folder, fdets_file, time_interval_minutes, output_folder):
+        def split_scan_by_time(self, input_folder: str, fdets_file: str, time_interval_minutes: float, output_folder: str) -> list[str]:
 
             """
             Splits a time-series file into segments based on a given time interval.
@@ -2592,7 +2592,7 @@ class PrideDopplerCharacterization:
             return output_files
 
 
-        def create_complete_scan_from_single_scans(self, files, output_folder):
+        def create_complete_scan_from_single_scans(self, files: list[str], output_folder: str) -> None:
             """
             This function concatenates single scans into a big, "complete" one, for ease of analysis.
 
@@ -2661,7 +2661,7 @@ class PrideDopplerCharacterization:
                 print(f"Created {output_filename}")
 
 
-        def read_allan_index(self, file_path):
+        def read_allan_index(self, file_path: str) -> float | None:
             """
             Reads a file and extracts the value of 'allan_index'.
 
@@ -2688,7 +2688,7 @@ class PrideDopplerCharacterization:
             return None
 
 
-        def get_vex_file_path(self, experiment_name, mission_name):
+        def get_vex_file_path(self, experiment_name: str, mission_name: str) -> str:
 
             """
             Constructs the file path for a VEX file associated with a specific experiment.
@@ -2716,7 +2716,7 @@ class PrideDopplerCharacterization:
             vex_file_path = os.path.join(main_vex_folder, vex_file_mission_folder, vex_file_name)
             return vex_file_path
 
-        def get_mission_from_experiment(self, experiment_name):
+        def get_mission_from_experiment(self, experiment_name: str) -> str:
 
             """
             Gets the name of a mission based on a given experiment name.
@@ -2738,7 +2738,7 @@ class PrideDopplerCharacterization:
                     mission_name = values['mission_name']
                     return mission_name
 
-        def generate_random_color(self):
+        def generate_random_color(self) -> str:
             """
             Generates a random, well-spaced color in hexadecimal format.
 
