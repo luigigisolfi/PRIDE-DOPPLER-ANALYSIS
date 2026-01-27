@@ -21,7 +21,7 @@ def get_station_name_from_file(filename: str) -> str:
         return match.group(1)
     return None
 
-def get_columns_names(filename: str):
+def get_columns_names(filename: str) -> dict[str, str]:
     """
     Analyzes line 3 of the file to determine column structure.
     Returns a dict describing the columns.

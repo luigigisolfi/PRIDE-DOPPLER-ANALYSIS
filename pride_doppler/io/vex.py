@@ -17,7 +17,7 @@ def extract_vex_block(vex_content: str, block_name: str) -> str:
     match = re.search(pattern, vex_content, re.DOTALL)
     return match.group(0) if match else None
 
-def parse_freq_block(block_content: str):
+def parse_freq_block(block_content: str) -> dict[str, dict[str, dict[str, str]]]:
     """
     Parses the content of a $FREQ block.
     Returns a dict: {station: {channel: {freq, bw, ...}}}

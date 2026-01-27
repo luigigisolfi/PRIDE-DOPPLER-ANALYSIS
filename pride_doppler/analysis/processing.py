@@ -6,7 +6,7 @@ from ..core.types import FdetsData
 import numpy as np
 from ..core.types import FdetsData
 
-def filter_data_zscore(data_list: list[FdetsData], threshold=3.5) -> list[FdetsData]:
+def filter_data_zscore(data_list: list[FdetsData], threshold: float | None = 3.5) -> list[FdetsData]:
     """
     Applies Z-score filtering to SNR and Doppler Noise.
     Returns a NEW list of FdetsData objects with outliers removed.
@@ -63,7 +63,10 @@ def filter_data_zscore(data_list: list[FdetsData], threshold=3.5) -> list[FdetsD
     return filtered_list
 
 
-def two_step_filter(extracted_parameters_list, keys=('Signal-to-Noise', 'Doppler Noise [Hz]'), threshold=3.5):
+def two_step_filter(extracted_parameters_list: list[dict[str, float | str]],
+                    keys=('Signal-to-Noise', 'Doppler Noise [Hz]'),
+                    threshold: float | None =3.5
+    ):
     if len(extracted_parameters_list) == 0:
         return extracted_parameters_list
 

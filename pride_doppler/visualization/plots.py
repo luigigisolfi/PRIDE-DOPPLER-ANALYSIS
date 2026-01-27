@@ -11,7 +11,7 @@ from ..core.types import FdetsData
 from matplotlib.ticker import ScalarFormatter
 import random
 import pandas as pd
-def get_plot_color(mission, exp_name):
+def get_plot_color(mission: str, exp_name: str):
     if mission == 'vex': return 'red'
     if mission == 'mro': return 'black'
     if mission == 'mex': return 'magenta'
@@ -21,7 +21,7 @@ def get_plot_color(mission, exp_name):
     # Random color generator
     return "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
-def plot_user_parameters(data, save_dir=None, suppress=False):
+def plot_user_parameters(data: FdetsData, save_dir : str | None =None, suppress: bool = False) -> None:
     """Standard SNR, Doppler, Fdets time series plot."""
     fig, axs = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
     fig.subplots_adjust(hspace=0.3)
@@ -64,7 +64,11 @@ def plot_user_parameters(data, save_dir=None, suppress=False):
     if not suppress: plt.show()
     plt.close(fig)
 
-def get_elevation_plot(data_list, target_name, mission_name, save_dir=None, suppress=True):
+def get_elevation_plot(data_list: list[FdetsData],
+                       target_name: str,
+                       mission_name: str,
+                       save_dir: str | None = None,
+                       suppress: bool = True) -> None:
     """
     Queries JPL Horizons and plots elevation for the given stations.
     """
@@ -131,7 +135,7 @@ def get_elevation_plot(data_list, target_name, mission_name, save_dir=None, supp
     if not suppress: plt.show()
     plt.close()
 
-def plot_histograms(data_list, param='snr', save_dir=None, suppress=True):
+def plot_histograms(data_list: list[FdetsData], param: str | None = 'snr', save_dir: str | None = None, suppress: bool = True):
     """
     Plots distributions for SNR or Doppler Noise using Seaborn.
     param: 'snr' or 'doppler'
@@ -165,7 +169,7 @@ def plot_histograms(data_list, param='snr', save_dir=None, suppress=True):
     if not suppress: plt.show()
     plt.close()
 
-def plot_allan_deviation(data_list: list, title: str, save_dir: str = None, suppress: bool = False):
+def plot_allan_deviation(data_list: list[FdetsData], title: str, save_dir: str | None = None, suppress: bool | None = False) -> None:
     """
     Computes and plots the Allan Deviation for a list of FdetsData objects.
     X-axis is formatted as integers (1, 10, 100) instead of scientific notation.
@@ -211,7 +215,7 @@ def plot_allan_deviation(data_list: list, title: str, save_dir: str = None, supp
     plt.close()
 
 
-def plot_filter_comparison(original_data: FdetsData, filtered_data: FdetsData, save_path: str = None, suppress: bool = False):
+def plot_filter_comparison(original_data: FdetsData, filtered_data: FdetsData, save_path: str = None, suppress: bool = False) -> None:
     """
     Creates a 2-panel plot comparing original vs. Z-score filtered data for SNR and Doppler noise.
     This version now includes the percentage of data retained in the legend.
@@ -305,7 +309,12 @@ def plot_filter_comparison(original_data: FdetsData, filtered_data: FdetsData, s
 
     plt.close(fig)
 
-def plot_elevation_profile(times, elevations, station_name, mission_name, save_dir=None, suppress=True):
+def plot_elevation_profile(times: list[datetime],
+                           elevations: list[float],
+                           station_name: str,
+                           mission_name: str,
+                           save_dir: str |None = None,
+                           suppress: bool | None = True) -> None:
     """
     Pure plotting function. No queries, no calculations.
     """

@@ -1,7 +1,7 @@
 from PIL import Image
 import os
 
-def combine_plots(image_paths, output_dir, output_file_name, direction='vertical'):
+def combine_plots(image_paths: list[str], output_dir: str, output_file_name: str, direction='vertical') -> None:
     """
     Stitches multiple images together
     """

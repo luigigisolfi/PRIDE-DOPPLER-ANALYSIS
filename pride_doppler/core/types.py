@@ -33,7 +33,7 @@ class FdetsData:
     second_col_name: str
     fifth_col_name: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """
         Validates that data arrays match the length of timestamps.
         Converts lists to numpy arrays if they were passed as lists.

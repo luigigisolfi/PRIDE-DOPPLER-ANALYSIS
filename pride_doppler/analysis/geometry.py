@@ -3,7 +3,7 @@ from datetime import datetime
 from astroquery.jplhorizons import Horizons
 from ..core.constants import ID_TO_SITE, STATION_GEODETIC_POSITIONS
 
-def compute_elevation_data(data, target_name):
+def compute_elevation_data(data: FdetsData, target_name: str) -> tuple[list[datetime], np.array, float] | None:
     """
     Queries JPL Horizons for a specific observation.
     Returns:
@@ -26,17 +26,12 @@ def compute_elevation_data(data, target_name):
     start = data.utc_datetime[0].strftime("%Y-%m-%d %H:%M")
     stop = data.utc_datetime[-1].strftime("%Y-%m-%d %H:%M")
 
-    try:
-        obj = Horizons(id=target_name, location=location, epochs={'start': start, 'stop': stop, 'step': '1m'})
-        eph = obj.ephemerides()
+    obj = Horizons(id=target_name, location=location, epochs={'start': start, 'stop': stop, 'step': '1m'})
+    eph = obj.ephemerides()
 
-        # Parse results
-        times = [datetime.strptime(str(t), "%Y-%b-%d %H:%M") for t in eph['datetime_str']]
-        elevations = np.array(eph['EL'])
-        mean_el = np.mean(elevations)
+    # Parse results
+    times = [datetime.strptime(str(t), "%Y-%b-%d %H:%M") for t in eph['datetime_str']]
+    elevations = np.array(eph['EL'])
+    mean_el = np.mean(elevations)
 
-        return times, elevations, mean_el
-
-    except Exception as e:
-        print(f"Horizons Query Failed for {station_id}: {e}")
-        return None, None, 0.0
+    return times, elevations, mean_el
