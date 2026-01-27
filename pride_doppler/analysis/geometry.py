@@ -1,7 +1,8 @@
 import numpy as np
 from datetime import datetime
 from astroquery.jplhorizons import Horizons
-from ..core.constants import ID_TO_SITE, STATION_GEODETIC_POSITIONS
+from pride_doppler.core.constants import ID_TO_SITE, STATION_GEODETIC_POSITIONS
+from pride_doppler.core.types import FdetsData
 
 def compute_elevation_data(data: FdetsData, target_name: str) -> tuple[list[datetime], np.array, float] | None:
     """
