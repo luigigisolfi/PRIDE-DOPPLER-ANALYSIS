@@ -54,7 +54,7 @@ def filter_data_zscore(data_list: list[FdetsData], threshold: float | None = 3.5
             else:
                 # This part matches the original script's behavior of flagging but still including the data.
                 # For a stricter filter, you could 'continue' here instead of appending.
-                print(f"  [Filter Warning] Station {entry.receiving_station_name}: Kept despite high mean Doppler noise.")
+                print(f"  [Filter Warning] Station {entry.receiving_station_name}: high mean Doppler noise.")
                 filtered_list.append(new_entry)
         else:
             # Append even if empty, to maintain list parallelism with original data
