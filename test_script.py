@@ -35,10 +35,9 @@ COMPARE_FILTERS_FLAG = True
 
 # Dates & Paths
 start_date = datetime.datetime(2000, 1, 1, tzinfo=timezone.utc)
-end_date = datetime.datetime(2024, 12, 31, tzinfo=timezone.utc)
-missions_to_analyse = ['min']
-root_dir = '/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/'
-# --- HELPER: Experiment Lookup ---
+end_date = datetime.datetime(2026, 12, 31, tzinfo=timezone.utc)
+missions_to_analyse = ['mro']
+root_dir = '/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/analysed_pride_data'
 from pride_doppler.core.constants import EXPERIMENTS
 from datetime import datetime, timezone
 
@@ -70,13 +69,12 @@ def find_experiment(yymmdd_str):
 
     return yymmdd_str # Fallback to date if no experiment found
 
-# --- EXECUTION ---
-
 # 1. Scan Folders
 print("Scanning for folders...")
 yymm_dict = list_yymm(start_date, end_date)
 days_list = [d for sublist in yymm_dict.values() for d in sublist]
 yymmdd_folders_per_mission = defaultdict(list)
+
 
 for mission in missions_to_analyse:
     mission_root = os.path.join(root_dir, mission)
@@ -84,10 +82,7 @@ for mission in missions_to_analyse:
         continue
 
     for day in days_list:
-        # Mission specific logic from original script
         if mission == 'vex' and not day.startswith('1401'): continue
-
-        # Check if day folder exists
         day_folder = f"{mission}_{day}"
         if os.path.exists(os.path.join(mission_root, day_folder)):
             yymmdd_folders_per_mission[mission].append(day)
@@ -371,34 +366,50 @@ for experiment_name, station_list in mean_rms_stats.items():
 
     for entry in station_list:
         for station, vals in entry.items():
+
             # Skip bad stations if Flag is ON
-            if station in removed: continue
+            if station in removed:
+                continue
 
-            # Extract Values
-            snr = vals['mean_snr']
+            # Extract values
             mean_dopp = vals['mean_doppler_noise']
-            rms_dopp = vals['rms_doppler_noise']
+            rms_dopp  = vals['rms_doppler_noise']
+            snr       = vals['mean_snr']
 
-            # Store raw SNR for unweighted mean
+            # Store raw SNR for reporting only
             agg_snr_raw.append(snr)
 
-            # Weighted Means (Weight by SNR)
-            if snr > 0:
-                agg_weighted['mean_doppler_noise']['sum'] += mean_dopp * snr
-                agg_weighted['mean_doppler_noise']['weight'] += snr
+            # --- Unweighted aggregation ---
 
-                agg_weighted['rms_doppler_noise']['sum'] += rms_dopp * snr
-                agg_weighted['rms_doppler_noise']['weight'] += snr
+            # Mean Doppler noise (simple mean)
+            agg_weighted['mean_doppler_noise']['sum'] += mean_dopp
+            agg_weighted['mean_doppler_noise']['weight'] += 1
 
-    # Calculate Final Values for this Experiment
+            # RMS Doppler noise (quadratic mean)
+            agg_weighted['rms_doppler_noise']['sum'] += rms_dopp**2
+            agg_weighted['rms_doppler_noise']['weight'] += 1
+
+    # Mean SNR (still fine as unweighted diagnostic)
     if agg_snr_raw:
-        mission_aggregates[curr_mission]['mean_snr'].append(np.mean(agg_snr_raw))
+        mission_aggregates[curr_mission]['mean_snr'].append(
+            np.mean(agg_snr_raw)
+        )
 
-    for k in ['mean_doppler_noise', 'rms_doppler_noise']:
-        if agg_weighted[k]['weight'] > 0:
-            # Weighted Average -> Convert to mHz
-            val = (agg_weighted[k]['sum'] / agg_weighted[k]['weight']) * 1000
-            mission_aggregates[curr_mission][k].append(val)
+    # Mean Doppler noise
+    if agg_weighted['mean_doppler_noise']['weight'] > 0:
+        val = (
+                      agg_weighted['mean_doppler_noise']['sum']
+                      / agg_weighted['mean_doppler_noise']['weight']
+              ) * 1000
+        mission_aggregates[curr_mission]['mean_doppler_noise'].append(val)
+
+    # RMS Doppler noise
+    if agg_weighted['rms_doppler_noise']['weight'] > 0:
+        val = np.sqrt(
+            agg_weighted['rms_doppler_noise']['sum']
+            / agg_weighted['rms_doppler_noise']['weight']
+        ) * 1000
+        mission_aggregates[curr_mission]['rms_doppler_noise'].append(val)
 
 # --- Print Final Table ---
 print("-" * 60)
