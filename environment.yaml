@@ -16,3 +16,7 @@ dependencies:
   - allantools
   - astroquery
   - streamlit
+  - fastapi
+  - uvicorn
+  - distutils
+  - python-multipart
