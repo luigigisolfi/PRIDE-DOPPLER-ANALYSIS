@@ -180,13 +180,36 @@ def get_mission_summary_plot(stats_df, color_by="Experiment"):
 def plot_allan_deviation(data_list):
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # This is heavy, so we compute inside the plot function to allow caching if needed
     for p in data_list:
         taus, oadev, _ = compute_oadev(p, tau_min=1, tau_max=1000)
         if taus is not None:
             ax.loglog(taus, oadev, '.-', label=f"{p.receiving_station_name} ({p.experiment_name})", alpha=0.7)
 
-    ax.grid(True, which="both", ls="--", alpha=0.5)
+    # Plot -1/2 slope reference white noise segments
+    anchor_taus = [0, 10, 20, 50, 100]  # Anchor points
+
+    # Create evenly-spaced reference levels in log space
+    oadev_levels = np.logspace(np.log10(ax.get_ylim()[0]), np.log10(ax.get_ylim()[1]), 50)
+
+    for i, tau_start in enumerate(anchor_taus):
+        # Determine end tau (next anchor point, or plot limit)
+        if i < len(anchor_taus) - 1:
+            tau_end = anchor_taus[i + 1]
+        else:
+            tau_end = ax.get_xlim()[1]
+
+        if tau_start == 0:
+            tau_start = ax.get_xlim()[0]
+
+        tau_segment = np.array([tau_start, tau_end])
+
+        for oadev_ref in oadev_levels:
+            # Each segment: OADEV(tau) = OADEV_ref * (tau/tau_start)^(-0.5)
+            ref_segment = oadev_ref * (tau_segment / tau_start)**-0.5
+            ax.loglog(tau_segment, ref_segment, color='gray', linestyle='--', alpha=0.3, linewidth=0.8)
+
+
+    #ax.grid(True, which="both", ls="--", alpha=0.5)
     ax.set_xlabel("Averaging Time (τ) [s]")
     ax.set_ylabel("Overlapping Allan Deviation")
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -196,7 +219,6 @@ def plot_allan_deviation(data_list):
     ax.ticklabel_format(style='plain', axis='x')
 
     return fig
-
 # --- MAIN APP UI ---
 st.title("📡 PRIDE Doppler Characterization")
 
