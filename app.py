@@ -14,7 +14,7 @@ from pride_doppler.io.fdets import extract_parameters
 from pride_doppler.analysis.processing import filter_data_zscore
 from pride_doppler.analysis.allan import compute_oadev
 from pride_doppler.analysis.geometry import compute_elevation_data
-from pride_doppler.core.constants import HORIZONS_TARGETS, EXPERIMENTS, ANTENNA_DIAMETERS
+from pride_doppler.core.constants import HORIZONS_TARGETS, ANTENNA_DIAMETERS
 
 # --- CONFIGURATION ---
 st.set_page_config(page_title="PRIDE Doppler Analyzer", layout="wide", page_icon="📡")
@@ -123,31 +123,42 @@ def get_plot_color(mission, exp_name):
 def get_mission_summary_plot(stats_df, color_by="Experiment"):
     if stats_df.empty: return None
 
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 14))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
 
+    # 1. Create a color map to ensure consistency
+    # This dictionary will store { "Group Name": "Color Code" }
+    group_color_map = {}
+
+    # Track which labels we have added to the legend so we don't duplicate them
     added_labels = set()
 
     for _, row in stats_df.iterrows():
-        # 1. Extract Data
+        # Extract Data
         st_name = row['Station']
-        # We need these specifically for your color function
         curr_mission = row['Mission']
         experiment_name = row['Experiment']
 
         snr = row['Mean SNR (dB)']
         rms = row['RMS Doppler (mHz)']
-        el = row['Mean Elevation']
         diam = ANTENNA_DIAMETERS.get(st_name, 30)
 
-        # 2. Get Color using your custom function
-        color = get_plot_color(curr_mission, experiment_name)
-
-        # 3. Determine Legend Label based on "color_by" selection
-        # This allows the user to toggle the Legend grouping (Mission vs Experiment)
-        # while keeping your specific color coding.
+        # Identify the grouping key (e.g., "VEX" or "ed045a")
         group_name = row[color_by]
-        label = group_name if group_name not in added_labels else None
-        added_labels.add(group_name)
+
+        # 2. Assign Color
+        if group_name not in group_color_map:
+            group_color_map[group_name] = get_plot_color(curr_mission, experiment_name)
+
+        # Retrieve the fixed color for this group
+        color = group_color_map[group_name]
+
+        # 3. Handle Legend Labels
+        # Only add the label to the plot if we haven't seen this group name before
+        if group_name not in added_labels:
+            label = group_name
+            added_labels.add(group_name)
+        else:
+            label = None
 
         marker_style = {'fmt': 'o', 'markersize': 6, 'alpha': 0.6, 'color': color}
 
@@ -157,12 +168,6 @@ def get_mission_summary_plot(stats_df, color_by="Experiment"):
 
         # Plot 2: SNR vs RMS Doppler
         ax2.errorbar(snr, rms, label=label, **marker_style)
-        ax2.annotate(st_name, (snr, rms), fontsize=8, alpha=0.8, xytext=(5, 5), textcoords='offset points')
-
-        # Plot 3: Elevation vs SNR
-        ms_scaled = 3 * diam / 10
-        ax3.errorbar(el, snr, fmt='o', markersize=ms_scaled, alpha=0.6, color=color, label=label)
-        ax3.annotate(st_name, (el, snr), fontsize=8, alpha=0.8, xytext=(5, 5), textcoords='offset points')
 
     # 5. Formatting
     ax1.set_ylabel('SNR [dB]'); ax1.set_xlabel('Station Code'); ax1.grid(True)
@@ -170,8 +175,6 @@ def get_mission_summary_plot(stats_df, color_by="Experiment"):
     ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., title=color_by)
 
     ax2.set_ylabel('RMS Doppler [mHz]'); ax2.set_xlabel('SNR [dB]'); ax2.grid(True); ax2.set_yscale('log')
-
-    ax3.set_ylabel('SNR [dB]'); ax3.set_xlabel('Elevation [deg]'); ax3.grid(True)
 
     plt.tight_layout()
     return fig
@@ -354,10 +357,10 @@ if st.session_state.data_loaded and st.session_state.processing_queue:
             mu, std = norm.fit(noise_mhz)
             with cols[i % 3]:
                 fig_g, ax_g = plt.subplots(figsize=(5, 3))
-                ax_g.hist(noise_mhz, bins=40, density=True, alpha=0.6, color='skyblue')
+                ax_g.hist(noise_mhz, bins=40, density=True, alpha=0.6, color='steelblue')
                 x = np.linspace(ax_g.get_xlim()[0], ax_g.get_xlim()[1], 100); ax_g.plot(x, norm.pdf(x, mu, std), 'r--', lw=1)
-                ax_g.set_title(f"{p_data.receiving_station_name}\n$\mu$={mu:.2f}", fontsize=9)
-                ax_g.set_xlabel("Noise [mHz]"); ax_g.set_ylabel("Density"); ax_g.tick_params(labelsize=7)
+                ax_g.set_title(f"{target_data.mission_name.upper()}- Gaussian Fit of Doppler Noise | Station: {p_data.receiving_station_name}", fontsize=5)
+                ax_g.set_xlabel("Doppler Noise [mHz]", fontsize = 6); ax_g.set_ylabel("Counts", fontsize = 6); ax_g.tick_params(labelsize=6)
                 st.pyplot(fig_g); plt.close(fig_g)
 
     # --- TAB 4: ALLAN DEVIATION ---

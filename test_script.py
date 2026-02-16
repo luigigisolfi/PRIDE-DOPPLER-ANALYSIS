@@ -1,5 +1,5 @@
 """
-PRIDE Doppler Data Characterization Script (Refactored)
+PRIDE Doppler Data Characterization Script
 -----------------------------------------------------
 """
 
@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
 from datetime import timezone
-from pride_doppler.core.constants import EXPERIMENTS, HORIZONS_TARGETS
+from pride_doppler.core.constants import HORIZONS_TARGETS
 from pride_doppler.io.fdets import extract_parameters
 from pride_doppler.utils.time import list_yymm
 from pride_doppler.utils.images import combine_plots
@@ -32,11 +32,13 @@ ALLAN_DEVIATIONS_FLAG = True
 BAD_OBSERVATIONS_FLAG = True
 ZSCORE_FILTERING_FLAG = True
 COMPARE_FILTERS_FLAG = True
+BAD_OBSERVATIONS_MEAN_DOPPLER_FILTER = 0.005 # 5 mHz
+Z_SCORE_THRESHOLD = 3.5
 
 # Dates & Paths
 start_date = datetime.datetime(2000, 1, 1, tzinfo=timezone.utc)
 end_date = datetime.datetime(2026, 12, 31, tzinfo=timezone.utc)
-missions_to_analyse = ['mro']
+missions_to_analyse = ['jui', 'mex', 'min', 'mro', 'vex']
 root_dir = '/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/analysed_pride_data'
 from pride_doppler.core.constants import EXPERIMENTS
 from datetime import datetime, timezone
@@ -90,11 +92,10 @@ for mission in missions_to_analyse:
 # 2. Processing Phase
 mean_rms_stats = defaultdict(list)
 
-
 for mission, days in yymmdd_folders_per_mission.items():
 
     run_bad_obs_check = BAD_OBSERVATIONS_FLAG
-    if mission == 'mro': run_bad_obs_check = False
+    if mission == 'mro': run_bad_obs_check = True
 
     # Get Horizons ID
     horizons_id = HORIZONS_TARGETS.get(mission, {}).get('target', '-999')
@@ -127,7 +128,7 @@ for mission, days in yymmdd_folders_per_mission.items():
             if ZSCORE_FILTERING_FLAG:
                 print("Applying Z-score filtering")
                 # This creates a new list of filtered data objects
-                filtered_data_list = filter_data_zscore(raw_data_list)
+                filtered_data_list = filter_data_zscore(raw_data_list, threshold = Z_SCORE_THRESHOLD)
 
         print(f"  > Found {len(raw_data_list)} stations to process for this day.")
         for original_data, processed_data in zip(raw_data_list, filtered_data_list):
@@ -234,7 +235,7 @@ fig, axes = plt.subplots(2, 1, figsize=(12, 10), sharex=False)
 ax1, ax2 = axes
 
 #########################################################################################################
-# OPTIONALLY ADD MEAN ELEVATION PLOT (NEEDS IMPROVEMENT BECAUSE "MEAN ELEVATION IS NOT A GOOD Figure of Merit")
+# OPTIONALLY ADD MEAN ELEVATION PLOT
 #fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=False)
 #ax1, ax2, ax3 = axes
 ########################################################################################################
@@ -243,9 +244,6 @@ count = 0
 count_bad = 0
 scans_to_remove = defaultdict(list)
 
-# Helper for colors (Ported from original logic)
-# Configuration for Bad Data Filter
-BAD_OBSERVATIONS_MEAN_DOPPLER_FILTER = 0.005 # 5 mHz
 skip_elevation = True
 # --- A. Main Plotting Loop ---
 for experiment_name, station_list in mean_rms_stats.items():
@@ -292,11 +290,10 @@ for experiment_name, station_list in mean_rms_stats.items():
 
             # 2. SNR vs RMS Doppler Noise
             ax2.errorbar(mean_snr, rms_doppler_mhz, label=label, **marker_style)
-            if is_bad:
-                ax2.annotate(station, (mean_snr, rms_doppler_mhz), fontsize=7, alpha=0.7)
+            ax2.annotate(station, (mean_snr, rms_doppler_mhz), fontsize=7, alpha=0.7)
 
             ########################################################################################################
-            # OPTIONALLY ADD MEAN ELEVATION PLOT (NEEDS IMPROVEMENT BECAUSE "MEAN ELEVATION IS NOT A GOOD Figure of Merit")
+            # OPTIONALLY ADD MEAN ELEVATION PLOT
             # 3. Elevation vs SNR
             #ax3.errorbar(mean_elevation, mean_snr, label=label, markersize=3 * diam / 10, fmt='o', alpha=0.6, color=color)
             #ax3.annotate(station, (mean_elevation, mean_snr), fontsize=7, alpha=0.7)
