@@ -382,7 +382,7 @@ def calculate_allan_deviation(payload: AllanRequest):
     return AllanResponse(taus=taus.tolist(), oadev=oadev.tolist(), errors=errors.tolist())
 
 @app.post("/analysis/elevation", response_model=ElevationResponse)
-def get_elevation_data(payload: ElevationRequest):
+def compute_elevation_data(payload: ElevationRequest):
     # 1. Validate Station
     # The station name is inside the 'data' object
     station_id = payload.data.receiving_station_name

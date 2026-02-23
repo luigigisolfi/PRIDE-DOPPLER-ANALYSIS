@@ -48,6 +48,7 @@ def load_and_process_batch(queue, z_thresh):
         if os.path.exists(input_dir):
             files = [f for f in os.listdir(input_dir) if f.startswith('Fdets') and f.endswith('r2i.txt')]
             for f in files:
+                print(f)
                 file_tasks.append((m_name, f_name, os.path.join(input_dir, f)))
 
     if not file_tasks: return [], []
@@ -140,7 +141,8 @@ def get_mission_summary_plot(stats_df, color_by="Experiment"):
 
         snr = row['Mean SNR (dB)']
         rms = row['RMS Doppler (mHz)']
-        diam = ANTENNA_DIAMETERS.get(st_name, 30)
+        #diam = ANTENNA_DIAMETERS.get(st_name, 30)
+
 
         # Identify the grouping key (e.g., "VEX" or "ed045a")
         group_name = row[color_by]
@@ -164,6 +166,8 @@ def get_mission_summary_plot(stats_df, color_by="Experiment"):
 
         # 4. Plotting
         # Plot 1: Station vs SNR
+        if curr_mission == 'jui' and st_name == 'Nt':
+            continue
         ax1.errorbar(st_name, snr, label=label, **marker_style)
 
         # Plot 2: SNR vs RMS Doppler
