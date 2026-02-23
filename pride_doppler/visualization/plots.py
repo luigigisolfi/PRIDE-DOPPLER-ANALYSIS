@@ -4,6 +4,7 @@ import seaborn as sns
 import os
 from astroquery.jplhorizons import Horizons
 from datetime import datetime
+
 from ..core.constants import ID_TO_SITE, STATION_GEODETIC_POSITIONS
 from ..analysis.allan import compute_oadev
 from matplotlib.ticker import MaxNLocator
@@ -11,6 +12,7 @@ from ..core.types import FdetsData
 from matplotlib.ticker import ScalarFormatter
 import random
 import pandas as pd
+import numpy as np
 def get_plot_color(mission: str, exp_name: str):
     if mission == 'vex': return 'red'
     if mission == 'mro': return 'black'
@@ -183,6 +185,31 @@ def plot_allan_deviation(data_list: list[FdetsData], title: str, save_dir: str |
         if taus is not None and len(taus) > 0:
             plt.loglog(taus, oadev, '.-', label=data.receiving_station_name)
 
+
+    # Plot -1/2 slope reference white noise segments
+    anchor_taus = [0, 10, 20, 50, 100]  # Anchor points
+
+    # Create evenly-spaced reference levels in log space
+    oadev_levels = np.logspace(np.log10(plt.ylim()[0]), np.log10(plt.ylim()[1]), 50)
+
+    for i, tau_start in enumerate(anchor_taus):
+        # Determine end tau (next anchor point, or plot limit)
+        if i < len(anchor_taus) - 1:
+            tau_end = anchor_taus[i + 1]
+        else:
+            tau_end = plt.xlim()[1]
+
+        if tau_start == 0:
+            tau_start = plt.xlim()[0]
+
+        tau_segment = np.array([tau_start, tau_end])
+
+        for oadev_ref in oadev_levels:
+            # Each segment: OADEV(tau) = OADEV_ref * (tau/tau_start)^(-0.5)
+            ref_segment = oadev_ref * (tau_segment / tau_start)**-0.5
+            plt.loglog(tau_segment, ref_segment, color='gray', linestyle='--', alpha=0.3, linewidth=0.8)
+
+
             if save_dir:
                 os.makedirs(save_dir, exist_ok=True)
                 # Construct a directory based on the save_path
@@ -190,7 +217,7 @@ def plot_allan_deviation(data_list: list[FdetsData], title: str, save_dir: str |
                 df_out = pd.DataFrame({'Tau': taus, 'Overlapping Allan Deviation': oadev, 'Error': err})
                 df_out.to_csv(os.path.join(save_dir, txt_name), sep=',', index=False)
 
-    plt.grid(True, which="both", ls="--", alpha=0.5)
+    plt.grid(True, which="both", ls="--", alpha=0.2)
     plt.xlabel("Averaging Time (τ) [s]")
     plt.ylabel("Overlapping Allan Deviation")
     plt.legend()
@@ -205,7 +232,7 @@ def plot_allan_deviation(data_list: list[FdetsData], title: str, save_dir: str |
     # -------------------------
 
     if save_dir:
-        save_path = os.path.join(save_dir, f'allan_deviations.png')
+        save_path = os.path.join(save_dir, f'allan_deviation.png')
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"  > Allan Deviation plot saved to: {os.path.basename(save_path)}")
 

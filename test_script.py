@@ -274,23 +274,31 @@ for experiment_name, station_list in mean_rms_stats.items():
 
             # --- Bad Observation Filtering Logic ---
             is_bad = False
-            if BAD_OBSERVATIONS_FLAG and curr_mission != 'mro':
+            if BAD_OBSERVATIONS_FLAG:
                 if np.abs(mean_doppler_mhz) > (BAD_OBSERVATIONS_MEAN_DOPPLER_FILTER * 1000):
                     is_bad = True
                     count_bad += 1
                     scans_to_remove[experiment_name].append(station)
                     print(f"  [Bad Scan Flagged] {station} in {experiment_name}: Mean Dopp={mean_doppler_mhz:.3f} mHz")
                     continue
+
             # --- Plotting ---
             marker_style = {'fmt': 'o', 'markersize': 6, 'alpha': 0.6, 'color': color}
 
             # Standard Points
             # 1. Station Code vs SNR
+            if station == 'Nt' and curr_mission == 'jui':
+                continue
+                # ax1.errorbar(station, mean_snr, label=label, marker = 'x', markersize = 10, color = 'red')
             ax1.errorbar(station, mean_snr, label=label, **marker_style)
 
             # 2. SNR vs RMS Doppler Noise
+            # if station == 'Nt':
+            #    ax2.errorbar(mean_snr, rms_doppler_mhz, label=label, marker = 'x', markersize = 6)
+            if station == 'Nt' and curr_mission == 'jui':
+                continue
             ax2.errorbar(mean_snr, rms_doppler_mhz, label=label, **marker_style)
-            ax2.annotate(station, (mean_snr, rms_doppler_mhz), fontsize=7, alpha=0.7)
+            ax2.annotate(station, (mean_snr, rms_doppler_mhz), fontsize=6, alpha=0.7)
 
             ########################################################################################################
             # OPTIONALLY ADD MEAN ELEVATION PLOT
