@@ -19,11 +19,11 @@ from pride_doppler.visualization.plots import (
     plot_user_parameters,
     plot_histograms,
     plot_allan_deviation,
-    plot_filter_comparison
+    plot_filter_comparison,
+    plot_gaussian
 )
 from pride_doppler.analysis.geometry import compute_elevation_data
 from pride_doppler.visualization.plots import plot_elevation_profile, get_plot_color
-import random
 from pride_doppler.core.constants import ANTENNA_DIAMETERS
 
 # --- CONFIGURATION ---
@@ -32,13 +32,15 @@ ALLAN_DEVIATIONS_FLAG = True
 BAD_OBSERVATIONS_FLAG = True
 ZSCORE_FILTERING_FLAG = True
 COMPARE_FILTERS_FLAG = True
+PLOT_GAUSSIAN_FLAG = True
+
 BAD_OBSERVATIONS_MEAN_DOPPLER_FILTER = 0.005 # 5 mHz
 Z_SCORE_THRESHOLD = 3.5
 
 # Dates & Paths
 start_date = datetime.datetime(2000, 1, 1, tzinfo=timezone.utc)
 end_date = datetime.datetime(2026, 12, 31, tzinfo=timezone.utc)
-missions_to_analyse = ['jui', 'mex', 'min', 'mro', 'vex']
+missions_to_analyse = ['jui']
 root_dir = '/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/analysed_pride_data'
 from pride_doppler.core.constants import EXPERIMENTS
 from datetime import datetime, timezone
@@ -142,6 +144,15 @@ for mission, days in yymmdd_folders_per_mission.items():
                     filtered_data=processed_data,
                     save_path=os.path.join(output_dir, 'filter_comparison', f"{station_name}_filter_comp.png"),
                     suppress=True
+                )
+
+            # --- Save Gaussian Fit to Statistics Folder ---
+            if PLOT_GAUSSIAN_FLAG:
+                plot_gaussian(
+                    filtered_doppler_noise=processed_data.doppler_noise_hz,
+                    station_code=station_name,
+                    mission_name=mission,
+                    save_dir=os.path.join(output_dir, 'statistics') # <--- Target folder
                 )
 
             # 2. Time Series Plot (SNR, Doppler, Fdets)

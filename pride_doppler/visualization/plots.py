@@ -4,7 +4,6 @@ import seaborn as sns
 import os
 from astroquery.jplhorizons import Horizons
 from datetime import datetime
-
 from ..core.constants import ID_TO_SITE, STATION_GEODETIC_POSITIONS
 from ..analysis.allan import compute_oadev
 from matplotlib.ticker import MaxNLocator
@@ -13,6 +12,8 @@ from matplotlib.ticker import ScalarFormatter
 import random
 import pandas as pd
 import numpy as np
+from scipy.stats import norm
+
 def get_plot_color(mission: str, exp_name: str):
     if mission == 'vex': return 'red'
     if mission == 'mro': return 'black'
@@ -380,4 +381,38 @@ def plot_elevation_profile(times: list[datetime],
     if not suppress:
         plt.show()
 
+    plt.close(fig)
+def plot_gaussian(filtered_doppler_noise, station_code, mission_name, save_dir=None):
+    """
+    Fits a Gaussian to the Doppler noise and saves/shows the plot.
+    """
+    import numpy as np
+    from scipy.stats import norm
+
+    # Fit data
+    mu, std = norm.fit(filtered_doppler_noise * 1000)
+
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    ax.hist(filtered_doppler_noise * 1000, bins=60, density=True, alpha=0.6, color='skyblue')
+
+    # Generate PDF curve
+    xmin, xmax = ax.get_xlim()
+    x = np.linspace(xmin, xmax, 100)
+    p = norm.pdf(x, mu, std)
+
+    ax.plot(x, p, 'r', linewidth=2, label=f'Gaussian fit: μ={mu:.3f}, σ={std:.3f}', linestyle='--')
+
+    ax.set_title(f'{mission_name.upper()} - Gaussian Fit | Station: {station_code}')
+    ax.set_xlabel('Doppler Noise [mHz]')
+    ax.set_ylabel('Probability Density')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, f"{station_code}_gaussian_fit.png")
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        print(f"    > Gaussian fit saved to: {os.path.basename(save_path)}")
+
+    # Close to prevent memory accumulation in loops
     plt.close(fig)
