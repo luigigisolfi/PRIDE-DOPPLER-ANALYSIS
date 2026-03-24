@@ -14,7 +14,15 @@ from pride_doppler.utils import time as time_utils
 
 
 def get_station_name_from_file(filename: str) -> str:
-    """Extracts station code from filename using Regex."""
+    """
+    Extracts the station code from the filename using a regular expression.
+
+    Args:
+        filename (str): The path or name of the Fdets file.
+
+    Returns:
+        str: The station code (e.g., 'Mc') or None if no match is found.
+    """
     pattern = r"Fdets\.\w+\d{4}\.\d{2}\.\d{2}(?:-\d{4}-\d{4})?\.(\w+)(?:\.complete)?\.r2i\.txt"
     match = re.search(pattern, filename)
     if match:
@@ -25,7 +33,13 @@ def get_station_name_from_file(filename: str) -> str:
 def get_columns_names(filename: str) -> dict[str, str]:
     """
     Analyzes line 3 of the file to determine column structure.
-    Returns a dict describing the columns.
+
+    Args:
+        filename (str): Path to the Fdets file.
+
+    Returns:
+        dict[str, str]: A dictionary containing the number of columns and 
+                        the names of the detected columns.
     """
     with open(filename, "r") as file:
         lines = file.readlines()
@@ -62,6 +76,13 @@ def get_observation_date(filename: str, first_col_name: str) -> str:
     """
     Determines the observation date string (YYYY.MM.DD or YYYY-MM-DD).
     Tries header regex first, then data inspection.
+
+    Args:
+        filename (str): Path to the Fdets file.
+        first_col_name (str): The name of the first column to guide parsing logic.
+
+    Returns:
+        str: The formatted date string or None if it cannot be determined.
     """
     with open(filename, "r") as file:
         lines = file.readlines()
@@ -99,6 +120,12 @@ def get_observation_date(filename: str, first_col_name: str) -> str:
 def extract_parameters(filename: str) -> FdetsData:
     """
     Main parsing function. Reads file, parses data, returns FdetsData object.
+
+    Args:
+        filename (str): Path to the Fdets ASCII file.
+
+    Returns:
+        FdetsData: A dataclass containing the parsed time-series and metadata.
     """
     station_name = get_station_name_from_file(filename)
     if not station_name:

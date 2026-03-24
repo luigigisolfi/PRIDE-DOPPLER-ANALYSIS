@@ -17,8 +17,8 @@ def split_scan_by_time(
         Path to the input folder.
     fdets_file : str
         Name of the input file.
-    time_interval_minutes : str
-        Time interval for averaging in seconds.
+    time_interval_minutes : float
+        Time interval for splitting in minutes.
     output_folder : str
         Path to the output folder.
 
@@ -108,6 +108,8 @@ def create_complete_scan_from_single_scans(
     files : list[str]
         For instance,
         files = glob.glob('/Users/lgisolfi/Desktop/data_archiving-1.0/dataset/juice/juice_cruise/EC094A/Fdets.*.r2i.txt')
+    output_folder : str
+        Path to the folder where the concatenated files will be saved.
     """
 
     os.makedirs(output_folder, exist_ok=True)

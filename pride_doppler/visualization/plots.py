@@ -1,3 +1,11 @@
+"""
+Visualization module for PRIDE Doppler analysis.
+
+This module provides functions for plotting time-series data (SNR, Doppler noise),
+elevation profiles via JPL Horizons, Allan deviation analysis, and statistical
+distributions of frequency detection results.
+"""
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import seaborn as sns
@@ -16,6 +24,16 @@ from scipy.stats import norm
 
 
 def get_plot_color(mission: str, exp_name: str):
+    """
+    Returns a consistent color mapping for specific missions or experiments.
+    
+    Args:
+        mission: The mission identifier (e.g., 'vex', 'mro').
+        exp_name: The experiment identifier (e.g., 'ed045a').
+        
+    Returns:
+        A string representing a matplotlib-compatible color.
+    """
     if mission == "vex":
         return "red"
     if mission == "mro":
@@ -35,7 +53,14 @@ def get_plot_color(mission: str, exp_name: str):
 def plot_user_parameters(
     data: FdetsData, save_dir: str | None = None, suppress: bool = False
 ) -> None:
-    """Standard SNR, Doppler, Fdets time series plot."""
+    """
+    Standard 3-panel time series plot showing SNR, Doppler Noise, and Frequency Detections.
+
+    Args:
+        data: FdetsData object containing the time series.
+        save_dir: Directory to save the resulting PNG and CSV files.
+        suppress: If True, prevents plt.show() from being called.
+    """
     fig, axs = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
     fig.subplots_adjust(hspace=0.3)
 
@@ -106,6 +131,13 @@ def get_elevation_plot(
 ) -> None:
     """
     Queries JPL Horizons and plots elevation for the given stations.
+
+    Args:
+        data_list: List of FdetsData objects to determine time ranges and stations.
+        target_name: SPICE target ID or name for JPL Horizons.
+        mission_name: Name of the mission for the plot title.
+        save_dir: Directory to save the plot and text data.
+        suppress: If True, prevents plt.show() from being called.
     """
     if not data_list:
         return
@@ -187,7 +219,12 @@ def plot_histograms(
 ):
     """
     Plots distributions for SNR or Doppler Noise using Seaborn.
-    param: 'snr' or 'doppler'
+
+    Args:
+        data_list: List of FdetsData objects.
+        param: Either 'snr' or 'doppler'.
+        save_dir: Directory to save the plot and CSV data.
+        suppress: If True, prevents plt.show() from being called.
     """
     import pandas as pd
 
@@ -231,6 +268,12 @@ def plot_allan_deviation(
     """
     Computes and plots the Allan Deviation for a list of FdetsData objects.
     X-axis is formatted as integers (1, 10, 100) instead of scientific notation.
+
+    Args:
+        data_list: List of FdetsData objects to analyze.
+        title: Title for the plot.
+        save_dir: Directory to save the plot and CSV results.
+        suppress: If True, prevents plt.show() from being called.
     """
     plt.figure(figsize=(10, 6))
 
@@ -459,6 +502,14 @@ def plot_elevation_profile(
 ) -> None:
     """
     Pure plotting function. No queries, no calculations.
+
+    Args:
+        times: List of datetime objects.
+        elevations: List of elevation values in degrees.
+        station_name: Name of the receiving station.
+        mission_name: Name of the mission.
+        save_dir: Directory to save the plot and CSV data.
+        suppress: If True, prevents plt.show() from being called.
     """
     if times is None or elevations is None:
         return
@@ -498,6 +549,12 @@ def plot_elevation_profile(
 def plot_gaussian(filtered_doppler_noise, station_code, mission_name, save_dir=None):
     """
     Fits a Gaussian to the Doppler noise and saves/shows the plot.
+
+    Args:
+        filtered_doppler_noise: Numpy array of Doppler noise values in Hz.
+        station_code: Identifier for the station.
+        mission_name: Name of the mission.
+        save_dir: Directory to save the plot.
     """
     import numpy as np
     from scipy.stats import norm

@@ -9,6 +9,18 @@ from pydantic import BaseModel
 class FdetsDataModel(BaseModel):
     """
     Pydantic schema for data validation and API serialization.
+
+    Attributes:
+        receiving_station_name (str): Name of the station that received the signal.
+        utc_datetime (List[datetime]): List of timestamps for each data point.
+        utc_date (str): The date of the observation in string format.
+        base_frequency (float): The reference base frequency in Hz.
+        signal_to_noise (List[float]): Signal-to-noise ratio values.
+        doppler_noise_hz (List[float]): Doppler noise measurements in Hz.
+        frequency_detection (List[float]): Detected frequency values in Hz.
+        first_col_name (Optional[str]): Original name of the first column in the source file.
+        second_col_name (Optional[str]): Original name of the second column in the source file.
+        fifth_col_name (Optional[str]): Original name of the fifth column in the source file.
     """
 
     receiving_station_name: str
@@ -43,6 +55,18 @@ class FdetsData:
     """
     Internal domain object optimized for scientific calculation.
     Attributes like signal_to_noise are kept as np.ndarrays.
+
+    Attributes:
+        receiving_station_name (str): Name of the station that received the signal.
+        utc_datetime (List[datetime]): List of timestamps for each data point.
+        utc_date (str): The date of the observation in string format.
+        base_frequency (float): The reference base frequency in Hz.
+        signal_to_noise (np.ndarray): Signal-to-noise ratio values.
+        doppler_noise_hz (np.ndarray): Doppler noise measurements in Hz.
+        frequency_detection (np.ndarray): Detected frequency values in Hz.
+        first_col_name (Optional[str]): Original name of the first column in the source file.
+        second_col_name (Optional[str]): Original name of the second column in the source file.
+        fifth_col_name (Optional[str]): Original name of the fifth column in the source file.
     """
 
     receiving_station_name: str

@@ -14,13 +14,27 @@ MJD_EPOCH = datetime(1858, 11, 17, 0, 0, 0)
 
 
 def mjd_to_utc(mjd: float) -> datetime.date:
-    """Converts Modified Julian Date (MJD) to a UTC date object."""
+    """
+    Converts Modified Julian Date (MJD) to a UTC date object.
+
+    Args:
+        mjd (float): The Modified Julian Date.
+
+    Returns:
+        datetime.date: The corresponding UTC date.
+    """
     return (MJD_EPOCH + timedelta(days=mjd)).date()
 
 
 def utc_to_mjd(utc_date_str: str) -> float:
     """
     Converts a UTC date string (YYYY.MM.DD) to MJD.
+
+    Args:
+        utc_date_str (str): Date string in 'YYYY.MM.DD' format.
+
+    Returns:
+        float: The Modified Julian Date.
     """
     try:
         utc_date = datetime.strptime(utc_date_str, "%Y.%m.%d")
@@ -36,6 +50,13 @@ def mjd_utc_seconds_to_utc(mjd: float, utc_seconds: float) -> datetime:
     """
     Converts MJD day + seconds into a full UTC datetime.
     Exact reproduction of original Utilities.mjd_utc_seconds_to_utc logic.
+
+    Args:
+        mjd (float): Modified Julian Date (integer part usually).
+        utc_seconds (float): Seconds passed since the start of the MJD day.
+
+    Returns:
+        datetime: Combined UTC datetime object.
     """
     # Convert MJD to JD
     jd = mjd + 2400000.5
@@ -61,6 +82,13 @@ def format_observation_time(
 ) -> datetime:
     """
     Combines 'YYYY.MM.DD' string and seconds-of-day into a datetime.
+
+    Args:
+        observation_date_str (str): Date in 'YYYY.MM.DD' format.
+        time_in_seconds (float): Seconds of the day.
+
+    Returns:
+        datetime: The combined datetime object.
     """
     obs_date = datetime.strptime(observation_date_str, "%Y.%m.%d")
 
@@ -85,6 +113,15 @@ def format_observation_time(
 def parse_datetime_flexible(t: str) -> datetime:
     """
     Attempts to parse a time string using multiple common formats.
+
+    Args:
+        t (str): The time string to parse.
+
+    Returns:
+        datetime: Parsed datetime object.
+
+    Raises:
+        ValueError: If the string does not match any supported formats.
     """
     formats = [
         "%Y-%m-%d %H:%M:%S.%f",
@@ -106,6 +143,13 @@ def parse_datetime_flexible(t: str) -> datetime:
 def list_yymm(start_date: datetime, end_date: datetime) -> dict:
     """
     Return a dictionary {yymm: [list of yymmdd]} for each day between start and end.
+
+    Args:
+        start_date (datetime): The beginning of the range.
+        end_date (datetime): The end of the range.
+
+    Returns:
+        dict: Mapping of YYMM strings to lists of YYMMDD strings.
     """
     if start_date > end_date:
         raise ValueError("Start date must be before end date.")

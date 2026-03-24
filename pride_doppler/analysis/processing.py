@@ -1,18 +1,29 @@
+"""
+This module provides filtering utilities for PRIDE Doppler data, including
+Z-score based outlier detection and noise-level validation for FdetsData
+objects and parameter dictionaries.
+"""
 import numpy as np
 from ..core.types import FdetsData
-
-# In pride_doppler/analysis/processing.py
-
-import numpy as np
-from ..core.types import FdetsData
-
+from typing import List, Dict, Union, Tuple
 
 def filter_data_zscore(
     data_list: list[FdetsData], threshold: float | None = 3.5
 ) -> list[FdetsData]:
     """
     Applies Z-score filtering to SNR and Doppler Noise.
-    Returns a NEW list of FdetsData objects with outliers removed.
+
+    Parameters:
+    -----------
+    data_list : list[FdetsData]
+        A list of FdetsData objects to be filtered.
+    threshold : float | None, optional
+        The modified Z-score threshold for outlier detection (default is 3.5).
+
+    Returns:
+    --------
+    list[FdetsData]
+        A new list of FdetsData objects with outliers removed.
     """
     filtered_list = []
 
@@ -67,10 +78,27 @@ def filter_data_zscore(
 
 
 def two_step_filter(
-    extracted_parameters_list: list[dict[str, float | str]],
-    keys=("Signal-to-Noise", "Doppler Noise [Hz]"),
+    extracted_parameters_list: List[Dict[str, Union[float, str]]],
+    keys: Tuple[str, ...] = ("Signal-to-Noise", "Doppler Noise [Hz]"),
     threshold: float | None = 3.5,
-):
+) -> List[Dict[str, Union[float, str]]]:
+    """
+    Applies a two-step filtering process to a list of parameter dictionaries.
+
+    Parameters:
+    -----------
+    extracted_parameters_list : list[dict[str, float | str]]
+        A list of dictionaries containing extracted parameters.
+    keys : tuple, optional
+        The dictionary keys to apply Z-score filtering on (default is SNR and Doppler Noise).
+    threshold : float | None, optional
+        The modified Z-score threshold for outlier detection (default is 3.5).
+
+    Returns:
+    --------
+    list[dict[str, float | str]]
+        The filtered list of parameter dictionaries.
+    """
     if len(extracted_parameters_list) == 0:
         return extracted_parameters_list
 

@@ -1,11 +1,14 @@
 """
 PRIDE Doppler Data Characterization Script
 -----------------------------------------------------
+This script processes PRIDE Doppler data by scanning mission directories, 
+extracting parameters from frequency detection files, applying Z-score 
+filtering, and generating various diagnostic plots (SNR, Doppler noise, 
+elevation, Allan deviation, and Gaussian fits).
 """
 
 import os
 import shutil
-import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
@@ -25,7 +28,7 @@ from pride_doppler.analysis.geometry import compute_elevation_data
 from pride_doppler.visualization.plots import plot_elevation_profile, get_plot_color
 from pride_doppler.core.constants import ANTENNA_DIAMETERS
 from pride_doppler.core.constants import EXPERIMENTS
-from datetime import datetime, timezone
+import datetime
 
 # --- CONFIGURATION ---
 RUN_EXPERIMENTS_STATISTICS_FLAG = True
@@ -39,7 +42,7 @@ BAD_OBSERVATIONS_MEAN_DOPPLER_FILTER = 0.005  # 5 mHz
 Z_SCORE_THRESHOLD = 3.5
 
 # Dates & Paths
-start_date = datetime.datetime(2000, 1, 1, tzinfo=timezone.utc)
+start_date = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
 end_date = datetime.datetime(2026, 12, 31, tzinfo=timezone.utc)
 missions_to_analyse = ["jui"]
 root_dir = "./analysed_pride_data"
@@ -53,8 +56,8 @@ def find_experiment(yymmdd_str):
         # Parse 'yymmdd' to datetime (Assumes 2000+)
         # Note: Your original code handled 'yymmddHHMM', but the folder names seem to be 'yymmdd'
         # Adjust format if your input string includes time.
-        current_dt = datetime.strptime(yymmdd_str, "%y%m%d").replace(
-            tzinfo=timezone.utc
+        current_dt = datetime.datetime.strptime(yymmdd_str, "%y%m%d").replace(
+            tzinfo=datetime.timezone.utc
         )
     except ValueError:
         return f"Unknown_{yymmdd_str}"
@@ -63,11 +66,11 @@ def find_experiment(yymmdd_str):
         # Parse the start/stop strings from constants (e.g., "2023y292d14h00m00s")
         try:
             fmt = "%Yy%jd%Hh%Mm%Ss"
-            start = datetime.strptime(exp_data["exper_nominal_start"], fmt).replace(
-                tzinfo=timezone.utc
+            start = datetime.datetime.strptime(exp_data["exper_nominal_start"], fmt).replace(
+                tzinfo=datetime.timezone.utc
             )
-            stop = datetime.strptime(exp_data["exper_nominal_stop"], fmt).replace(
-                tzinfo=timezone.utc
+            stop = datetime.datetime.strptime(exp_data["exper_nominal_stop"], fmt).replace(
+                tzinfo=datetime.timezone.utc
             )
 
             # Check if current date falls within this experiment

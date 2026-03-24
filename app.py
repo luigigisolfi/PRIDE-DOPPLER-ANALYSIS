@@ -1,3 +1,11 @@
+"""
+PRIDE Doppler Characterization Tool
+
+This Streamlit application provides a comprehensive interface for analyzing and visualizing 
+PRIDE Doppler data. It supports batch processing of experiment files, Z-score filtering, 
+elevation calculation via Horizons, and stability analysis using Overlapping Allan Deviation.
+"""
+
 import streamlit as st
 import os
 import numpy as np
@@ -30,11 +38,13 @@ if "data_loaded" not in st.session_state:
 # --- HELPER: CACHED FUNCTIONS ---
 @st.cache_data(show_spinner=False)
 def extract_parameters_wrapper(f_path):
+    """Cached wrapper for extracting Doppler parameters from a file."""
     return extract_parameters(f_path)
 
 
 @st.cache_data(ttl=3600)
 def get_cached_elevation(station_data, target_id):
+    """Computes and caches elevation data for a given station and target."""
     try:
         return compute_elevation_data(station_data, target_id)
     except Exception as e:
@@ -44,6 +54,10 @@ def get_cached_elevation(station_data, target_id):
 # --- BATCH PROCESSING ---
 @st.cache_data(show_spinner=False)
 def load_and_process_batch(queue, z_thresh):
+    """
+    Loads files from the processing queue and applies Z-score filtering 
+    using a thread pool for performance.
+    """
     batch_raw = []
     batch_filtered = []
     file_tasks = []
@@ -88,6 +102,7 @@ def load_and_process_batch(queue, z_thresh):
 
 # --- PLOTTING ADAPTERS ---
 def get_time_series_fig(data):
+    """Generates a 3-panel time series plot: SNR, Doppler Noise, and Frequency Detection."""
     fig, axs = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
     axs[0].plot(
         data.utc_datetime, data.signal_to_noise, "+-", color="blue", lw=0.5, ms=5
@@ -118,6 +133,7 @@ def get_time_series_fig(data):
 
 
 def get_comparison_fig(raw, filtered):
+    """Generates a comparison plot showing data points kept vs. removed by filtering."""
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
     retention = (
         (len(filtered.utc_datetime) / len(raw.utc_datetime)) * 100
@@ -201,6 +217,7 @@ def get_comparison_fig(raw, filtered):
 
 
 def get_plot_color(mission, exp_name):
+    """Returns a consistent color mapping based on mission or experiment name."""
     if mission == "vex":
         return "red"
     if mission == "mro":
@@ -218,6 +235,7 @@ def get_plot_color(mission, exp_name):
 
 
 def get_mission_summary_plot(stats_df, color_by="Experiment"):
+    """Generates summary plots: Station vs SNR and SNR vs RMS Doppler."""
     if stats_df.empty:
         return None
 
@@ -289,6 +307,7 @@ def get_mission_summary_plot(stats_df, color_by="Experiment"):
 
 # --- ALLAN DEVIATION PLOTTER ---
 def plot_allan_deviation(data_list):
+    """Computes and plots the Overlapping Allan Deviation for a list of datasets."""
     fig, ax = plt.subplots(figsize=(10, 6))
 
     for p in data_list:

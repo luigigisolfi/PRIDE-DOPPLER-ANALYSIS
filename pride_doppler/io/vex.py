@@ -13,6 +13,13 @@ from collections import defaultdict
 def extract_vex_block(vex_content: str, block_name: str) -> str:
     """
     Finds a specific block (e.g. $FREQ) in the VEX content string.
+
+    Args:
+        vex_content (str): The full content of the VEX file.
+        block_name (str): The name of the block to extract (without the $).
+
+    Returns:
+        str: The content of the block including the header, or None if not found.
     """
     pattern = f"\\${block_name}\\s*;.*?(\\$|$)"
     match = re.search(pattern, vex_content, re.DOTALL)
@@ -22,7 +29,12 @@ def extract_vex_block(vex_content: str, block_name: str) -> str:
 def parse_freq_block(block_content: str) -> dict[str, dict[str, dict[str, str]]]:
     """
     Parses the content of a $FREQ block.
-    Returns a dict: {station: {channel: {freq, bw, ...}}}
+
+    Args:
+        block_content (str): The string content of the $FREQ block.
+
+    Returns:
+        dict: A nested dictionary mapping station codes to channel definitions.
     """
     stations_dict = defaultdict(dict)
     in_freq_block = False
@@ -107,6 +119,14 @@ def get_baseband_frequency_from_file(
     """
     Reads a VEX file and finds the baseband frequency for a station
     that covers the target X-band frequency.
+
+    Args:
+        vex_file_path (str): Path to the .vix file.
+        station_code (str): The station identifier (e.g., 'Mc').
+        target_freq_mhz (float): The target frequency in MHz to match.
+
+    Returns:
+        float: The baseband frequency (f_start) if found, else None.
     """
     if not os.path.exists(vex_file_path):
         print(f"VEX file not found: {vex_file_path}")

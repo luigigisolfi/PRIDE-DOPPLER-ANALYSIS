@@ -10,6 +10,16 @@ def compute_oadev(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
     """
     Computes Overlapping Allan Deviation for a single observation.
+
+    Args:
+        data: The frequency detection data containing Doppler noise and timestamps.
+        tau_min: Minimum tau value (integration time) to include in the results.
+        tau_max: Maximum tau value (integration time) to include in the results.
+
+    Returns:
+        A tuple containing (taus, oadev, errors) as numpy arrays, or (None, None, None)
+        if the data is insufficient or invalid. The oadev is normalized by the
+        base frequency.
     """
     if len(data.doppler_noise_hz) < 2:
         return None, None, None

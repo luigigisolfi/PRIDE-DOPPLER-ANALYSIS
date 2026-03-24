@@ -10,10 +10,15 @@ def compute_elevation_data(
 ) -> tuple[list[datetime], np.array, float] | None:
     """
     Queries JPL Horizons for a specific observation.
+
+    Args:
+        data (FdetsData): The observation data containing station and time info.
+        target_name (str): The JPL Horizons identifier for the target body.
+
     Returns:
-        - times (list of datetime): Time axis for plotting
-        - elevations (np.array): Elevation axis for plotting
-        - mean_elevation (float): Scalar for statistics
+        tuple[list[datetime], np.array, float] | None: A tuple containing the list of 
+            datetimes, an array of elevation angles, and the mean elevation. 
+            Returns None if the station is unknown.
     """
     station_id = data.receiving_station_name
     site_name = ID_TO_SITE.get(station_id)

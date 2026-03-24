@@ -1,8 +1,18 @@
 """
 pride_doppler/core/constants.py
 
-This module contains static configuration data, mapping dictionaries,
-and reference values previously found in the Utilities class.
+This module serves as the central repository for static configuration data,
+mapping dictionaries, and reference values used throughout the PRIDE Doppler
+analysis pipeline.
+
+It includes:
+- Experiment definitions (start/stop times, mission names).
+- Spacecraft metadata (nominal frequencies, SNR, noise characteristics).
+- Antenna specifications (diameters, site ID mappings).
+- JPL Horizons target identifiers for ephemeris retrieval.
+- Geodetic coordinates for ground stations.
+
+Note: All frequencies are in MHz and geodetic positions are [Alt (m), Lat (deg), Lon (deg)].
 """
 
 # -----------------------------------------------------------------------------
