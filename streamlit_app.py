@@ -6,15 +6,14 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.ticker import ScalarFormatter
 from scipy.stats import norm
-import seaborn as sns
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import random
-# --- LIBRARY IMPORTS ---
 from pride_doppler.io.fdets import extract_parameters
 from pride_doppler.analysis.processing import filter_data_zscore
 from pride_doppler.analysis.allan import compute_oadev
 from pride_doppler.analysis.geometry import compute_elevation_data
-from pride_doppler.core.constants import HORIZONS_TARGETS, ANTENNA_DIAMETERS
+from pride_doppler.core.constants import HORIZONS_TARGETS, ANTENNA_DIAMETERS, EXPERIMENTS
 
 # --- CONFIGURATION ---
 st.set_page_config(page_title="PRIDE Doppler Analyzer", layout="wide", page_icon="📡")
@@ -57,12 +56,12 @@ def load_and_process_batch(queue, z_thresh):
         m_name, f_name, f_path = task
         raw = extract_parameters(f_path)
         if raw:
-            raw.experiment_name = f_name
+            raw.experiment_name = get_experiment_label(m_name, f_name)
             raw.mission_name = m_name
             filt_list = filter_data_zscore([raw], threshold=z_thresh)
             filt = filt_list[0] if filt_list else None
             if filt:
-                filt.experiment_name = f_name
+                filt.experiment_name = get_experiment_label(m_name, f_name)
                 filt.mission_name = m_name
                 return raw, filt
         return None, None
@@ -121,7 +120,7 @@ def get_plot_color(mission, exp_name):
     # Random color generator
     return "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
-def get_mission_summary_plot(stats_df, color_by="Experiment"):
+def get_mission_summary_plot(stats_df, color_by="Mission"):
     if stats_df.empty: return None
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
@@ -145,12 +144,18 @@ def get_mission_summary_plot(stats_df, color_by="Experiment"):
 
 
         # Identify the grouping key (e.g., "VEX" or "ed045a")
-        group_name = row[color_by]
+        if 'vex' in str(curr_mission).lower():
+            group_name = "vex (Jan 2014)"
+        else:
+            group_name = experiment_name
 
         # 2. Assign Color
         if group_name not in group_color_map:
-            group_color_map[group_name] = get_plot_color(curr_mission, experiment_name)
-
+            # Force all VEX experiments to be red
+            if 'vex' in str(curr_mission).lower():
+                group_color_map[group_name] = 'red'
+            else:
+                group_color_map[group_name] = get_plot_color(curr_mission, experiment_name)
         # Retrieve the fixed color for this group
         color = group_color_map[group_name]
 
@@ -174,14 +179,49 @@ def get_mission_summary_plot(stats_df, color_by="Experiment"):
         ax2.errorbar(snr, rms, label=label, **marker_style)
 
     # 5. Formatting
-    ax1.set_ylabel('SNR [dB]'); ax1.set_xlabel('Station Code'); ax1.grid(True)
+    ax1.set_ylabel('SNR [dB]', fontsize = 12); ax1.set_xlabel('Station Code', fontsize = 12); ax1.grid(True)
     # Legend is placed on top plot
-    ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., title=color_by)
-
-    ax2.set_ylabel('RMS Doppler [mHz]'); ax2.set_xlabel('SNR [dB]'); ax2.grid(True); ax2.set_yscale('log')
-
+    ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., title='Experiment', fontsize = 12)
+    ax1.tick_params(axis='both', which='major', labelsize=12)
+    ax2.set_ylabel('RMS Doppler [mHz]', fontsize = 12); ax2.set_xlabel('SNR [dB]', fontsize = 12); ax2.grid(True); ax2.set_yscale('log')
+    ax2.tick_params(axis='both', which='major', labelsize=12)
     plt.tight_layout()
     return fig
+
+def get_experiment_label(mission, folder_name):
+    """
+    Given a mission and folder like 'mex_131228',
+    return the canonical experiment key from EXPERIMENTS.
+    """
+    mission = mission.lower()
+    if mission == 'vex':
+        return "VEX (JAN 2014)"
+
+    # Extract date from folder
+    yymmdd = folder_name.split('_')[-1]  # e.g., '131228'
+    try:
+        folder_dt = datetime.strptime(yymmdd, "%y%m%d")
+    except ValueError:
+        return folder_name  # fallback
+
+    for exp_key, exp_data in EXPERIMENTS.items():
+        mission_entry = exp_data["mission_name"]
+        if isinstance(mission_entry, list):
+            mission_entry = [m.lower() for m in mission_entry]
+            if mission not in mission_entry:
+                continue
+        else:
+            if mission != mission_entry.lower():
+                continue
+        fmt = "%Yy%jd%Hh%Mm%Ss"
+        start = datetime.strptime(exp_data["exper_nominal_start"], fmt)
+        stop = datetime.strptime(exp_data["exper_nominal_stop"], fmt)
+
+        if start.date() <= folder_dt.date() <= stop.date():
+            return exp_key
+
+    # fallback
+    return folder_name
 
 # --- ALLAN DEVIATION PLOTTER ---
 def plot_allan_deviation(data_list):
