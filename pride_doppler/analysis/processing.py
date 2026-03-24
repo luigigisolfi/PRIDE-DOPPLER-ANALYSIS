@@ -47,17 +47,13 @@ def filter_data_zscore(data_list: list[FdetsData], threshold: float | None = 3.5
             fifth_col_name=entry.fifth_col_name
         )
 
-        # Secondary Check (Mean Doppler) - This logic was correct, but let's make it more explicit
         if len(new_entry.doppler_noise_hz) > 0:
             if np.abs(np.mean(new_entry.doppler_noise_hz)) < 0.005:
                 filtered_list.append(new_entry)
             else:
-                # This part matches the original script's behavior of flagging but still including the data.
-                # For a stricter filter, you could 'continue' here instead of appending.
                 print(f"  [Filter Warning] Station {entry.receiving_station_name}: high mean Doppler noise.")
                 filtered_list.append(new_entry)
         else:
-            # Append even if empty, to maintain list parallelism with original data
             filtered_list.append(new_entry)
 
     return filtered_list
