@@ -21,52 +21,56 @@ def get_station_name_from_file(filename: str) -> str:
         return match.group(1)
     return None
 
+
 def get_columns_names(filename: str) -> dict[str, str]:
     """
     Analyzes line 3 of the file to determine column structure.
     Returns a dict describing the columns.
     """
-    with open(filename, 'r') as file:
+    with open(filename, "r") as file:
         lines = file.readlines()
         if len(lines) < 3:
-            return {'number_of_columns': 0}
+            return {"number_of_columns": 0}
 
         # Line 3 (index 2) contains headers
         columns_header = lines[2].strip()
-        parts = columns_header.split('|')
+        parts = columns_header.split("|")
 
         # Handle trailing pipes
-        n_columns = len(parts) - 1 if parts[-1] == '' else len(parts)
+        n_columns = len(parts) - 1 if parts[-1] == "" else len(parts)
 
-        col_map = {'number_of_columns': n_columns}
+        col_map = {"number_of_columns": n_columns}
 
         # Helper to safely strip 'Format:' prefixes
         def clean_col(s):
-            return s.split(':', 1)[1] if ':' in s else s
+            return s.split(":", 1)[1] if ":" in s else s
 
         if n_columns >= 5:
-            col_map['first_col_name'] = clean_col(parts[0])
-            col_map['second_col_name'] = clean_col(parts[1]) if n_columns >= 2 else ""
-            col_map['third_col_name'] = parts[2]
-            col_map['fourth_col_name'] = parts[3]
-            col_map['fifth_col_name'] = parts[4]
+            col_map["first_col_name"] = clean_col(parts[0])
+            col_map["second_col_name"] = clean_col(parts[1]) if n_columns >= 2 else ""
+            col_map["third_col_name"] = parts[2]
+            col_map["fourth_col_name"] = parts[3]
+            col_map["fifth_col_name"] = parts[4]
 
         if n_columns == 6:
-            col_map['sixth_col_name'] = parts[5]
+            col_map["sixth_col_name"] = parts[5]
 
         return col_map
+
 
 def get_observation_date(filename: str, first_col_name: str) -> str:
     """
     Determines the observation date string (YYYY.MM.DD or YYYY-MM-DD).
     Tries header regex first, then data inspection.
     """
-    with open(filename, 'r') as file:
+    with open(filename, "r") as file:
         lines = file.readlines()
 
         # Method 1: Header Regex
         header_line = lines[0]
-        match = re.search(r'Observation conducted on (\d{4}\.\d{2}\.\d{2})', header_line)
+        match = re.search(
+            r"Observation conducted on (\d{4}\.\d{2}\.\d{2})", header_line
+        )
         if match:
             return match.group(1)
 
@@ -74,19 +78,23 @@ def get_observation_date(filename: str, first_col_name: str) -> str:
         if len(lines) > 5:
             data_line = lines[5].strip().split()
 
-            if first_col_name.strip() == 'UTC Time':
+            if first_col_name.strip() == "UTC Time":
                 # format: 2023-04-05T12:00:00...
                 utc_part = data_line[0]
                 dt = datetime.strptime(utc_part, "%Y-%m-%dT%H:%M:%S.%f")
                 return dt.strftime("%Y-%m-%d")
 
-            elif 'Modified Julian Date' in first_col_name or 'Modified JD' in first_col_name:
+            elif (
+                "Modified Julian Date" in first_col_name
+                or "Modified JD" in first_col_name
+            ):
                 mjd_val = float(data_line[0])
                 dt_date = time_utils.mjd_to_utc(mjd_val)
                 return dt_date.strftime("%Y.%m.%d")
 
     print(f"Warning: Could not retrieve observation date from {filename}")
     return None
+
 
 def extract_parameters(filename: str) -> FdetsData:
     """
@@ -99,22 +107,22 @@ def extract_parameters(filename: str) -> FdetsData:
 
     # 1. Analyze Columns
     col_info = get_columns_names(filename)
-    n_cols = col_info.get('number_of_columns', 0)
+    n_cols = col_info.get("number_of_columns", 0)
 
     # 2. Get Date
-    first_col = col_info.get('first_col_name', '')
+    first_col = col_info.get("first_col_name", "")
     obs_date = get_observation_date(filename, first_col)
     if not obs_date:
         return None
 
     # 3. Get Base Frequency (Line 2)
     base_freq = 0.0
-    with open(filename, 'r') as f:
-        header_lines = [next(f) for _ in range(4)] # Read first 4 lines
+    with open(filename, "r") as f:
+        header_lines = [next(f) for _ in range(4)]  # Read first 4 lines
         try:
             # Line 2 (index 1) typically: "Base Frequency: 8400.00 MHz"
-            parts = header_lines[1].split(' ')
-            base_freq = float(parts[3]) * 1e6 # Convert MHz to Hz
+            parts = header_lines[1].split(" ")
+            base_freq = float(parts[3]) * 1e6  # Convert MHz to Hz
         except:
             print(f"Invalid base frequency in header of {filename}.")
             # Original code had logic to fallback or prompt user.
@@ -135,7 +143,7 @@ def extract_parameters(filename: str) -> FdetsData:
     is_mjd = False
 
     if n_cols == 5:
-        if first_col.strip() == 'scan':
+        if first_col.strip() == "scan":
             idx_time, idx_snr, idx_freq, idx_dopp = 1, 2, 4, 5
         # Standard 5 col: Time, SNR, SpecMax, Freq, Dopp
     else:
@@ -148,12 +156,14 @@ def extract_parameters(filename: str) -> FdetsData:
     if is_mjd:
         mjd_ref_day = time_utils.utc_to_mjd(obs_date)
 
-    with open(filename, 'r') as file:
+    with open(filename, "r") as file:
         for i, line in enumerate(file):
-            if i < 4: continue # Skip header
+            if i < 4:
+                continue  # Skip header
 
             parts = line.strip().split()
-            if not parts: continue
+            if not parts:
+                continue
 
             try:
                 # Extract Raw Values
@@ -193,7 +203,7 @@ def extract_parameters(filename: str) -> FdetsData:
         signal_to_noise=np.array(snr_list),
         doppler_noise_hz=np.array(doppler_list),
         frequency_detection=np.array(freq_det_list),
-        first_col_name=col_info.get('first_col_name', ''),
-        second_col_name=col_info.get('second_col_name', ''),
-        fifth_col_name=col_info.get('fifth_col_name', '')
+        first_col_name=col_info.get("first_col_name", ""),
+        second_col_name=col_info.get("second_col_name", ""),
+        fifth_col_name=col_info.get("fifth_col_name", ""),
     )

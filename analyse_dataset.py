@@ -19,7 +19,7 @@ from pride_doppler.visualization.plots import (
     plot_histograms,
     plot_allan_deviation,
     plot_filter_comparison,
-    plot_gaussian
+    plot_gaussian,
 )
 from pride_doppler.analysis.geometry import compute_elevation_data
 from pride_doppler.visualization.plots import plot_elevation_profile, get_plot_color
@@ -35,14 +35,15 @@ ZSCORE_FILTERING_FLAG = True
 COMPARE_FILTERS_FLAG = True
 PLOT_GAUSSIAN_FLAG = True
 
-BAD_OBSERVATIONS_MEAN_DOPPLER_FILTER = 0.005 # 5 mHz
+BAD_OBSERVATIONS_MEAN_DOPPLER_FILTER = 0.005  # 5 mHz
 Z_SCORE_THRESHOLD = 3.5
 
 # Dates & Paths
 start_date = datetime.datetime(2000, 1, 1, tzinfo=timezone.utc)
 end_date = datetime.datetime(2026, 12, 31, tzinfo=timezone.utc)
-missions_to_analyse = ['jui']
-root_dir = './analysed_pride_data'
+missions_to_analyse = ["jui"]
+root_dir = "./analysed_pride_data"
+
 
 def find_experiment(yymmdd_str):
     """
@@ -52,7 +53,9 @@ def find_experiment(yymmdd_str):
         # Parse 'yymmdd' to datetime (Assumes 2000+)
         # Note: Your original code handled 'yymmddHHMM', but the folder names seem to be 'yymmdd'
         # Adjust format if your input string includes time.
-        current_dt = datetime.strptime(yymmdd_str, "%y%m%d").replace(tzinfo=timezone.utc)
+        current_dt = datetime.strptime(yymmdd_str, "%y%m%d").replace(
+            tzinfo=timezone.utc
+        )
     except ValueError:
         return f"Unknown_{yymmdd_str}"
 
@@ -60,8 +63,12 @@ def find_experiment(yymmdd_str):
         # Parse the start/stop strings from constants (e.g., "2023y292d14h00m00s")
         try:
             fmt = "%Yy%jd%Hh%Mm%Ss"
-            start = datetime.strptime(exp_data["exper_nominal_start"], fmt).replace(tzinfo=timezone.utc)
-            stop = datetime.strptime(exp_data["exper_nominal_stop"], fmt).replace(tzinfo=timezone.utc)
+            start = datetime.strptime(exp_data["exper_nominal_start"], fmt).replace(
+                tzinfo=timezone.utc
+            )
+            stop = datetime.strptime(exp_data["exper_nominal_stop"], fmt).replace(
+                tzinfo=timezone.utc
+            )
 
             # Check if current date falls within this experiment
             # Note: We compare the whole day. You might want to refine logic if boundaries are tight.
@@ -70,7 +77,8 @@ def find_experiment(yymmdd_str):
         except ValueError:
             continue
 
-    return yymmdd_str # Fallback to date if no experiment found
+    return yymmdd_str  # Fallback to date if no experiment found
+
 
 # 1. Scan Folders
 print("Scanning for folders...")
@@ -85,7 +93,8 @@ for mission in missions_to_analyse:
         continue
 
     for day in days_list:
-        if mission == 'vex' and not day.startswith('1401'): continue
+        if mission == "vex" and not day.startswith("1401"):
+            continue
         day_folder = f"{mission}_{day}"
         if os.path.exists(os.path.join(mission_root, day_folder)):
             yymmdd_folders_per_mission[mission].append(day)
@@ -96,27 +105,29 @@ mean_rms_stats = defaultdict(list)
 for mission, days in yymmdd_folders_per_mission.items():
 
     run_bad_obs_check = BAD_OBSERVATIONS_FLAG
-    if mission == 'mro': run_bad_obs_check = True
+    if mission == "mro":
+        run_bad_obs_check = True
 
     # Get Horizons ID
-    horizons_id = HORIZONS_TARGETS.get(mission, {}).get('target', '-999')
+    horizons_id = HORIZONS_TARGETS.get(mission, {}).get("target", "-999")
 
     for day in days:
         folder_name = f"{mission}_{day}"
         base_path = os.path.join(root_dir, mission, folder_name)
-        input_dir = os.path.join(base_path, 'input')
-        output_dir = os.path.join(base_path, 'output')
+        input_dir = os.path.join(base_path, "input")
+        output_dir = os.path.join(base_path, "output")
 
         print(f"Processing: {folder_name}")
 
         if RUN_EXPERIMENTS_STATISTICS_FLAG:
-            if os.path.exists(output_dir): shutil.rmtree(output_dir)
+            if os.path.exists(output_dir):
+                shutil.rmtree(output_dir)
 
             # --- A. Extract Data ---
-            raw_data_list = [] # <-- Store raw data here
+            raw_data_list = []  # <-- Store raw data here
             if os.path.exists(input_dir):
                 for f in sorted(os.listdir(input_dir)):
-                    if f.startswith('Fdets') and f.endswith('r2i.txt'):
+                    if f.startswith("Fdets") and f.endswith("r2i.txt"):
                         data_obj = extract_parameters(os.path.join(input_dir, f))
                         if data_obj:
                             raw_data_list.append(data_obj)
@@ -125,11 +136,13 @@ for mission, days in yymmdd_folders_per_mission.items():
                 print(f"No valid fdets found in {input_dir}")
                 continue
 
-            filtered_data_list = raw_data_list # Default to raw if not filtering
+            filtered_data_list = raw_data_list  # Default to raw if not filtering
             if ZSCORE_FILTERING_FLAG:
                 print("Applying Z-score filtering")
                 # This creates a new list of filtered data objects
-                filtered_data_list = filter_data_zscore(raw_data_list, threshold = Z_SCORE_THRESHOLD)
+                filtered_data_list = filter_data_zscore(
+                    raw_data_list, threshold=Z_SCORE_THRESHOLD
+                )
 
         print(f"  > Found {len(raw_data_list)} stations to process for this day.")
         for original_data, processed_data in zip(raw_data_list, filtered_data_list):
@@ -141,8 +154,12 @@ for mission, days in yymmdd_folders_per_mission.items():
                 plot_filter_comparison(
                     original_data=original_data,
                     filtered_data=processed_data,
-                    save_path=os.path.join(output_dir, 'filter_comparison', f"{station_name}_filter_comp.png"),
-                    suppress=True
+                    save_path=os.path.join(
+                        output_dir,
+                        "filter_comparison",
+                        f"{station_name}_filter_comp.png",
+                    ),
+                    suppress=True,
                 )
 
             # --- Save Gaussian Fit to Statistics Folder ---
@@ -151,22 +168,23 @@ for mission, days in yymmdd_folders_per_mission.items():
                     filtered_doppler_noise=processed_data.doppler_noise_hz,
                     station_code=station_name,
                     mission_name=mission,
-                    save_dir=os.path.join(output_dir, 'statistics') # <--- Target folder
+                    save_dir=os.path.join(
+                        output_dir, "statistics"
+                    ),  # <--- Target folder
                 )
 
             # 2. Time Series Plot (SNR, Doppler, Fdets)
             # This plot needs to be generated so combine_plots can find it later.
             plot_user_parameters(
                 processed_data,
-                save_dir=os.path.join(output_dir, 'user_defined_parameters'),
-                suppress=True
+                save_dir=os.path.join(output_dir, "user_defined_parameters"),
+                suppress=True,
             )
 
             # 3. Elevation Logic
             # A. CALCULATION (Analysis Layer)
             times, elevations, mean_el = compute_elevation_data(
-                processed_data,
-                target_name=horizons_id
+                processed_data, target_name=horizons_id
             )
 
             # B. VISUALIZATION (Vis Layer) - Returns nothing
@@ -175,8 +193,8 @@ for mission, days in yymmdd_folders_per_mission.items():
                 elevations,
                 station_name=station_name,
                 mission_name=mission,
-                save_dir=os.path.join(output_dir, 'elevation'),
-                suppress=True
+                save_dir=os.path.join(output_dir, "elevation"),
+                suppress=True,
             )
 
             # 4. Collect Statistics for this station
@@ -186,26 +204,28 @@ for mission, days in yymmdd_folders_per_mission.items():
             rms_dopp = np.std(processed_data.doppler_noise_hz)
 
             exp_name = find_experiment(day)
-            mean_rms_stats[exp_name].append({
-                station_name: {
-                    'mean_snr': mean_snr,
-                    'rms_snr': rms_snr,
-                    'mean_doppler_noise': mean_dopp,
-                    'rms_doppler_noise': rms_dopp,
-                    'mean_elevation': mean_el
+            mean_rms_stats[exp_name].append(
+                {
+                    station_name: {
+                        "mean_snr": mean_snr,
+                        "rms_snr": rms_snr,
+                        "mean_doppler_noise": mean_dopp,
+                        "rms_doppler_noise": rms_dopp,
+                        "mean_elevation": mean_el,
+                    }
                 }
-            })
+            )
 
             # 5. Combine Plots (TimeSeries + Elevation) for this station
             ts_name = f"{station_name}_{processed_data.utc_date}_params.png"
             el_name = f"{station_name}_{processed_data.utc_date}_elevation.png"
-            ts_path = os.path.join(output_dir, 'user_defined_parameters', ts_name)
-            el_path = os.path.join(output_dir, 'elevation', el_name)
+            ts_path = os.path.join(output_dir, "user_defined_parameters", ts_name)
+            el_path = os.path.join(output_dir, "elevation", el_name)
 
             combine_plots(
                 [ts_path, el_path],
-                output_dir=os.path.join(output_dir, 'combined'),
-                output_file_name=f"{station_name}_combined.png"
+                output_dir=os.path.join(output_dir, "combined"),
+                output_file_name=f"{station_name}_combined.png",
             )
 
         # =====================================================================
@@ -215,22 +235,22 @@ for mission, days in yymmdd_folders_per_mission.items():
 
         # 1. Aggregate Histograms
         plot_histograms(
-            filtered_data_list, # Use the list of all (filtered) stations for this day
-            param='doppler',
-            save_dir=os.path.join(output_dir, 'statistics'),
-            suppress=True
+            filtered_data_list,  # Use the list of all (filtered) stations for this day
+            param="doppler",
+            save_dir=os.path.join(output_dir, "statistics"),
+            suppress=True,
         )
 
         # 2. Aggregate Allan Deviation Plot
         if ALLAN_DEVIATIONS_FLAG:
             plot_allan_deviation(
-                data_list=filtered_data_list, # Use the list of all (filtered) stations
+                data_list=filtered_data_list,  # Use the list of all (filtered) stations
                 title=f"Allan Deviation - {folder_name}",
-                save_dir=os.path.join(output_dir, 'allan_deviations'),
-                suppress=True
+                save_dir=os.path.join(output_dir, "allan_deviations"),
+                suppress=True,
             )
 
-        plt.close('all')
+        plt.close("all")
 
 # 3. Final Summary
 print("Run Complete.")
@@ -246,8 +266,8 @@ ax1, ax2 = axes
 
 #########################################################################################################
 # OPTIONALLY ADD MEAN ELEVATION PLOT
-#fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=False)
-#ax1, ax2, ax3 = axes
+# fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=False)
+# ax1, ax2, ax3 = axes
 ########################################################################################################
 labels_snr = set()
 count = 0
@@ -258,7 +278,9 @@ skip_elevation = True
 # --- A. Main Plotting Loop ---
 for experiment_name, station_list in mean_rms_stats.items():
 
-    curr_mission = EXPERIMENTS.get(experiment_name, {}).get('mission_name', 'VEX (JAN 2014)')
+    curr_mission = EXPERIMENTS.get(experiment_name, {}).get(
+        "mission_name", "VEX (JAN 2014)"
+    )
 
     color = get_plot_color(curr_mission, experiment_name)
     label = experiment_name if experiment_name not in labels_snr else None
@@ -268,36 +290,42 @@ for experiment_name, station_list in mean_rms_stats.items():
         for station, metrics in entry.items():
             # Retrieve Metrics
             # Note: Convert to dB and mHz to match original units
-            mean_snr = 10 * np.log10(metrics['mean_snr']) if metrics['mean_snr'] > 0 else 0
-            rms_snr = 10 * np.log10(metrics['rms_snr']) if metrics['rms_snr'] > 0 else 0
+            mean_snr = (
+                10 * np.log10(metrics["mean_snr"]) if metrics["mean_snr"] > 0 else 0
+            )
+            rms_snr = 10 * np.log10(metrics["rms_snr"]) if metrics["rms_snr"] > 0 else 0
 
             # Doppler is stored in Hz in the new class, convert to mHz here
-            mean_doppler_mhz = metrics['mean_doppler_noise'] * 1000
-            rms_doppler_mhz = metrics['rms_doppler_noise'] * 1000
+            mean_doppler_mhz = metrics["mean_doppler_noise"] * 1000
+            rms_doppler_mhz = metrics["rms_doppler_noise"] * 1000
 
             # Elevation (Handle case where it might be missing)
-            mean_elevation = metrics.get('mean_elevation', 0)
+            mean_elevation = metrics.get("mean_elevation", 0)
 
             # Get Antenna Diameter for marker size
-            diam = ANTENNA_DIAMETERS.get(station, 30) # Default 30m if unknown
+            diam = ANTENNA_DIAMETERS.get(station, 30)  # Default 30m if unknown
             count += 1
 
             # --- Bad Observation Filtering Logic ---
             is_bad = False
             if BAD_OBSERVATIONS_FLAG:
-                if np.abs(mean_doppler_mhz) > (BAD_OBSERVATIONS_MEAN_DOPPLER_FILTER * 1000):
+                if np.abs(mean_doppler_mhz) > (
+                    BAD_OBSERVATIONS_MEAN_DOPPLER_FILTER * 1000
+                ):
                     is_bad = True
                     count_bad += 1
                     scans_to_remove[experiment_name].append(station)
-                    print(f"  [Bad Scan Flagged] {station} in {experiment_name}: Mean Dopp={mean_doppler_mhz:.3f} mHz")
+                    print(
+                        f"  [Bad Scan Flagged] {station} in {experiment_name}: Mean Dopp={mean_doppler_mhz:.3f} mHz"
+                    )
                     continue
 
             # --- Plotting ---
-            marker_style = {'fmt': 'o', 'markersize': 6, 'alpha': 0.6, 'color': color}
+            marker_style = {"fmt": "o", "markersize": 6, "alpha": 0.6, "color": color}
 
             # Standard Points
             # 1. Station Code vs SNR
-            if station == 'Nt' and curr_mission == 'jui':
+            if station == "Nt" and curr_mission == "jui":
                 continue
                 # ax1.errorbar(station, mean_snr, label=label, marker = 'x', markersize = 10, color = 'red')
             ax1.errorbar(station, mean_snr, label=label, **marker_style)
@@ -305,7 +333,7 @@ for experiment_name, station_list in mean_rms_stats.items():
             # 2. SNR vs RMS Doppler Noise
             # if station == 'Nt':
             #    ax2.errorbar(mean_snr, rms_doppler_mhz, label=label, marker = 'x', markersize = 6)
-            if station == 'Nt' and curr_mission == 'jui':
+            if station == "Nt" and curr_mission == "jui":
                 continue
             ax2.errorbar(mean_snr, rms_doppler_mhz, label=label, **marker_style)
             ax2.annotate(station, (mean_snr, rms_doppler_mhz), fontsize=6, alpha=0.7)
@@ -313,40 +341,41 @@ for experiment_name, station_list in mean_rms_stats.items():
             ########################################################################################################
             # OPTIONALLY ADD MEAN ELEVATION PLOT
             # 3. Elevation vs SNR
-            #ax3.errorbar(mean_elevation, mean_snr, label=label, markersize=3 * diam / 10, fmt='o', alpha=0.6, color=color)
-            #ax3.annotate(station, (mean_elevation, mean_snr), fontsize=7, alpha=0.7)
+            # ax3.errorbar(mean_elevation, mean_snr, label=label, markersize=3 * diam / 10, fmt='o', alpha=0.6, color=color)
+            # ax3.annotate(station, (mean_elevation, mean_snr), fontsize=7, alpha=0.7)
             ########################################################################################################
 
             # Only label the legend once per experiment
-            if label: label = None
+            if label:
+                label = None
 
 
 if BAD_OBSERVATIONS_FLAG and count > 0:
     print(f"Percentage of Bad Scans: {(count_bad/count)*100:.2f} %")
 
 # Subplot 1
-ax1.set_ylabel('SNR [dB]')
-ax1.set_xlabel('Station Code')
+ax1.set_ylabel("SNR [dB]")
+ax1.set_xlabel("Station Code")
 ax1.grid(True)
 # Move legend outside
-ax1.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+ax1.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
 
 # Subplot 2
-ax2.set_xlabel('SNR [dB]')
-ax2.set_ylabel('RMS Doppler Noise [mHz]')
+ax2.set_xlabel("SNR [dB]")
+ax2.set_ylabel("RMS Doppler Noise [mHz]")
 ax2.grid(True)
-ax2.set_yscale('log')
+ax2.set_yscale("log")
 
 ########################################################################################################
 # OPTIONALLY ADD MEAN ELEVATION PLOT (NEEDS IMPROVEMENT BECAUSE "MEAN ELEVATION IS NOT A GOOD Figure of Merit")
 # Subplot 3
-#ax3.set_xlabel('Elevation [deg]')
-#ax3.set_ylabel('SNR [dB]')
-#ax3.grid(True)
+# ax3.set_xlabel('Elevation [deg]')
+# ax3.set_ylabel('SNR [dB]')
+# ax3.grid(True)
 ########################################################################################################
 
 plt.tight_layout(pad=2)
-plt.savefig(os.path.join(root_dir, 'final_mission_summary.png'))
+plt.savefig(os.path.join(root_dir, "final_mission_summary.png"))
 print(f"Summary plot saved to {root_dir}")
 # plt.show() # Uncomment to view interactive
 
@@ -357,17 +386,17 @@ print(f"Summary plot saved to {root_dir}")
 
 print("\nComputing Weighted Mission Aggregates...")
 
-mission_aggregates = defaultdict(lambda: {
-    'mean_snr': [],
-    'mean_doppler_noise': [],
-    'rms_doppler_noise': []
-})
+mission_aggregates = defaultdict(
+    lambda: {"mean_snr": [], "mean_doppler_noise": [], "rms_doppler_noise": []}
+)
 
 for experiment_name, station_list in mean_rms_stats.items():
     # Identify Removed Stations
     removed = scans_to_remove.get(experiment_name, [])
 
-    mission_val = EXPERIMENTS.get(experiment_name, {}).get('mission_name', 'VEX (JAN 2014)')
+    mission_val = EXPERIMENTS.get(experiment_name, {}).get(
+        "mission_name", "VEX (JAN 2014)"
+    )
 
     if isinstance(mission_val, list):
         # If it's a list (like for 'ec064'), default to the first mission.
@@ -376,7 +405,7 @@ for experiment_name, station_list in mean_rms_stats.items():
         # Otherwise, use the string value as is.
         curr_mission = mission_val
     # Aggregate Containers
-    agg_weighted = defaultdict(lambda: {'sum': 0.0, 'weight': 0.0})
+    agg_weighted = defaultdict(lambda: {"sum": 0.0, "weight": 0.0})
     agg_snr_raw = []
 
     for entry in station_list:
@@ -387,9 +416,9 @@ for experiment_name, station_list in mean_rms_stats.items():
                 continue
 
             # Extract values
-            mean_dopp = vals['mean_doppler_noise']
-            rms_dopp  = vals['rms_doppler_noise']
-            snr       = vals['mean_snr']
+            mean_dopp = vals["mean_doppler_noise"]
+            rms_dopp = vals["rms_doppler_noise"]
+            snr = vals["mean_snr"]
 
             # Store raw SNR for reporting only
             agg_snr_raw.append(snr)
@@ -397,44 +426,47 @@ for experiment_name, station_list in mean_rms_stats.items():
             # --- Unweighted aggregation ---
 
             # Mean Doppler noise (simple mean)
-            agg_weighted['mean_doppler_noise']['sum'] += mean_dopp
-            agg_weighted['mean_doppler_noise']['weight'] += 1
+            agg_weighted["mean_doppler_noise"]["sum"] += mean_dopp
+            agg_weighted["mean_doppler_noise"]["weight"] += 1
 
             # RMS Doppler noise (quadratic mean)
-            agg_weighted['rms_doppler_noise']['sum'] += rms_dopp**2
-            agg_weighted['rms_doppler_noise']['weight'] += 1
+            agg_weighted["rms_doppler_noise"]["sum"] += rms_dopp**2
+            agg_weighted["rms_doppler_noise"]["weight"] += 1
 
     # Mean SNR (still fine as unweighted diagnostic)
     if agg_snr_raw:
-        mission_aggregates[curr_mission]['mean_snr'].append(
-            np.mean(agg_snr_raw)
-        )
+        mission_aggregates[curr_mission]["mean_snr"].append(np.mean(agg_snr_raw))
 
     # Mean Doppler noise
-    if agg_weighted['mean_doppler_noise']['weight'] > 0:
+    if agg_weighted["mean_doppler_noise"]["weight"] > 0:
         val = (
-                      agg_weighted['mean_doppler_noise']['sum']
-                      / agg_weighted['mean_doppler_noise']['weight']
-              ) * 1000
-        mission_aggregates[curr_mission]['mean_doppler_noise'].append(val)
+            agg_weighted["mean_doppler_noise"]["sum"]
+            / agg_weighted["mean_doppler_noise"]["weight"]
+        ) * 1000
+        mission_aggregates[curr_mission]["mean_doppler_noise"].append(val)
 
     # RMS Doppler noise
-    if agg_weighted['rms_doppler_noise']['weight'] > 0:
-        val = np.sqrt(
-            agg_weighted['rms_doppler_noise']['sum']
-            / agg_weighted['rms_doppler_noise']['weight']
-        ) * 1000
-        mission_aggregates[curr_mission]['rms_doppler_noise'].append(val)
+    if agg_weighted["rms_doppler_noise"]["weight"] > 0:
+        val = (
+            np.sqrt(
+                agg_weighted["rms_doppler_noise"]["sum"]
+                / agg_weighted["rms_doppler_noise"]["weight"]
+            )
+            * 1000
+        )
+        mission_aggregates[curr_mission]["rms_doppler_noise"].append(val)
 
 # --- Print Final Table ---
 print("-" * 60)
-print(f"{'MISSION':<10} | {'Mean SNR (dB)':<15} | {'Mean Dopp (mHz)':<15} | {'RMS Dopp (mHz)':<15}")
+print(
+    f"{'MISSION':<10} | {'Mean SNR (dB)':<15} | {'Mean Dopp (mHz)':<15} | {'RMS Dopp (mHz)':<15}"
+)
 print("-" * 60)
 
 for mission, foms in mission_aggregates.items():
-    m_snr = 10 * np.log10(np.mean(foms['mean_snr'])) if foms['mean_snr'] else 0
-    m_dopp = np.mean(foms['mean_doppler_noise']) if foms['mean_doppler_noise'] else 0
-    r_dopp = np.mean(foms['rms_doppler_noise']) if foms['rms_doppler_noise'] else 0
+    m_snr = 10 * np.log10(np.mean(foms["mean_snr"])) if foms["mean_snr"] else 0
+    m_dopp = np.mean(foms["mean_doppler_noise"]) if foms["mean_doppler_noise"] else 0
+    r_dopp = np.mean(foms["rms_doppler_noise"]) if foms["rms_doppler_noise"] else 0
 
     print(f"{mission.upper():<10} | {m_snr:<15.2f} | {m_dopp:<15.4f} | {r_dopp:<15.4f}")
 print("-" * 60)

@@ -1,24 +1,32 @@
 from PIL import Image
 import os
 
-def combine_plots(image_paths: list[str], output_dir: str, output_file_name: str, direction='vertical') -> None:
+
+def combine_plots(
+    image_paths: list[str], output_dir: str, output_file_name: str, direction="vertical"
+) -> None:
     """
     Stitches multiple images together
     """
-    if not image_paths: return
+    if not image_paths:
+        return
 
     try:
         images = [Image.open(p) for p in image_paths if os.path.exists(p)]
-        if len(images) < 2: return
+        if len(images) < 2:
+            return
 
         # Resize logic
-        if direction == 'vertical':
+        if direction == "vertical":
             max_width = max(i.width for i in images)
             # Resize all to max width
-            images = [i.resize((max_width, int(i.height * max_width / i.width))) for i in images]
+            images = [
+                i.resize((max_width, int(i.height * max_width / i.width)))
+                for i in images
+            ]
 
             total_height = sum(i.height for i in images)
-            new_img = Image.new('RGB', (max_width, total_height), (255, 255, 255))
+            new_img = Image.new("RGB", (max_width, total_height), (255, 255, 255))
 
             y_offset = 0
             for i in images:
@@ -27,9 +35,12 @@ def combine_plots(image_paths: list[str], output_dir: str, output_file_name: str
         else:
             # Horizontal logic (simple implementation)
             max_height = max(i.height for i in images)
-            images = [i.resize((int(i.width * max_height / i.height), max_height)) for i in images]
+            images = [
+                i.resize((int(i.width * max_height / i.height), max_height))
+                for i in images
+            ]
             total_width = sum(i.width for i in images)
-            new_img = Image.new('RGB', (total_width, max_height), (255, 255, 255))
+            new_img = Image.new("RGB", (total_width, max_height), (255, 255, 255))
             x_offset = 0
             for i in images:
                 new_img.paste(i, (x_offset, 0))

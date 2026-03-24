@@ -4,7 +4,10 @@ from collections import Counter
 from astropy.time import Time
 from ..core.types import FdetsData
 
-def compute_oadev(data: FdetsData, tau_min: float | None, tau_max: float | None) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
+
+def compute_oadev(
+    data: FdetsData, tau_min: float | None, tau_max: float | None
+) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
     """
     Computes Overlapping Allan Deviation for a single observation.
     """
@@ -17,7 +20,8 @@ def compute_oadev(data: FdetsData, tau_min: float | None, tau_max: float | None)
     diffs = np.diff(t_jd)
 
     # Find most common time difference
-    if len(diffs) == 0: return None, None, None
+    if len(diffs) == 0:
+        return None, None, None
 
     most_common_diff = Counter(diffs).most_common(1)
     if not most_common_diff or most_common_diff[0][0] == 0:
@@ -30,14 +34,16 @@ def compute_oadev(data: FdetsData, tau_min: float | None, tau_max: float | None)
     taus, oadev, errors, _ = allantools.oadev(
         data=np.array(data.doppler_noise_hz) / data.base_frequency,
         rate=rate_fdets,
-        data_type='freq',
-        taus='decade'
+        data_type="freq",
+        taus="decade",
     )
     # 3. Filter Taus
     if tau_min is not None or tau_max is not None:
         mask = np.ones_like(taus, dtype=bool)
-        if tau_min: mask &= (taus >= tau_min)
-        if tau_max: mask &= (taus <= tau_max)
+        if tau_min:
+            mask &= taus >= tau_min
+        if tau_max:
+            mask &= taus <= tau_max
 
         taus = taus[mask]
         oadev = oadev[mask]

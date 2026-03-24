@@ -8,7 +8,8 @@ from typing import List, Optional
 from datetime import datetime
 from pride_doppler.visualization import plots
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 from pride_doppler.core import constants
 
 # --- Imports ---
@@ -57,45 +58,27 @@ fdets_data_model_example_juice = {
     ],
     "first_col_name": " UTC Time     ",
     "second_col_name": "    Signal-to-Noise     ",
-    "fifth_col_name": "   Doppler noise [Hz]  "
+    "fifth_col_name": "   Doppler noise [Hz]  ",
 }
 
 fdets_data_model_example_mex = {
-        "receiving_station_name": "On",
-        "utc_datetime": [
-            "2024-03-05T10:00:00",
-            "2024-03-05T10:01:00",
-            "2024-03-05T10:02:00",
-            "2024-03-05T10:03:00",
-            "2024-03-05T10:04:00"
-        ],
-        "utc_date": "2024.03.05",
-        "base_frequency": 8420000000.0,
-        "signal_to_noise": [
-            50.5,
-            51.2,
-            50.8,
-            51.0,
-            50.9
-        ],
-        "doppler_noise_hz": [
-            0.001,
-            0.002,
-            -0.001,
-            0.001,
-            0.0
-        ],
-        "frequency_detection": [
-            1000.0,
-            1005.0,
-            1010.0,
-            1015.0,
-            1020.0
-        ],
-        "first_col_name": "UTC Time",
-        "second_col_name": "SNR",
-        "fifth_col_name": "Doppler Noise"
-    }
+    "receiving_station_name": "On",
+    "utc_datetime": [
+        "2024-03-05T10:00:00",
+        "2024-03-05T10:01:00",
+        "2024-03-05T10:02:00",
+        "2024-03-05T10:03:00",
+        "2024-03-05T10:04:00",
+    ],
+    "utc_date": "2024.03.05",
+    "base_frequency": 8420000000.0,
+    "signal_to_noise": [50.5, 51.2, 50.8, 51.0, 50.9],
+    "doppler_noise_hz": [0.001, 0.002, -0.001, 0.001, 0.0],
+    "frequency_detection": [1000.0, 1005.0, 1010.0, 1015.0, 1020.0],
+    "first_col_name": "UTC Time",
+    "second_col_name": "SNR",
+    "fifth_col_name": "Doppler Noise",
+}
 
 fdets_data_model_example_juice_filtered = {
     "receiving_station_name": "Ef",
@@ -123,7 +106,7 @@ fdets_data_model_example_juice_filtered = {
     ],
     "first_col_name": " UTC Time     ",
     "second_col_name": "    Signal-to-Noise     ",
-    "fifth_col_name": "   Doppler noise [Hz]  "
+    "fifth_col_name": "   Doppler noise [Hz]  ",
 }
 
 
@@ -135,12 +118,14 @@ def get_stations():
     """
     return constants.ID_TO_SITE
 
+
 @app.get("/meta/spacecraft")
 def get_spacecraft_data():
     """
     Returns reference data for supported spacecraft (frequencies, antenna codes, etc.).
     """
     return constants.SPACECRAFT_DATA
+
 
 @app.get("/meta/horizons-targets")
 def get_horizons_targets():
@@ -150,6 +135,7 @@ def get_horizons_targets():
     """
     return constants.HORIZONS_TARGETS
 
+
 @app.get("/meta/experiments")
 def get_experiments():
     """
@@ -157,45 +143,71 @@ def get_experiments():
     """
     return constants.EXPERIMENTS
 
+
 class AllanRequest(BaseModel):
     data: FdetsDataModel = Field(
-        ...,
-        description = 'JSON',
-        examples = [fdets_data_model_example_juice]
+        ..., description="JSON", examples=[fdets_data_model_example_juice]
     )
-    tau_min: float | None = Field(10, description = 'Minimum tau for Allan Deviation calculation', examples = [10, 20])
-    tau_max: float | None = Field(1000, description = 'Minimum tau for Allan Deviation calculation', examples = [1000, 2000])
+    tau_min: float | None = Field(
+        10, description="Minimum tau for Allan Deviation calculation", examples=[10, 20]
+    )
+    tau_max: float | None = Field(
+        1000,
+        description="Minimum tau for Allan Deviation calculation",
+        examples=[1000, 2000],
+    )
+
 
 class AllanResponse(BaseModel):
     taus: List[float]
     oadev: List[float]
     errors: List[float]
 
+
 class ElevationRequest(BaseModel):
-    data: FdetsDataModel = Field(..., description = 'JSON', examples = [fdets_data_model_example_mex] )
-    target_name: str = Field(..., description = 'Horizons Target Name or Code', examples = ['Mars Express'])
+    data: FdetsDataModel = Field(
+        ..., description="JSON", examples=[fdets_data_model_example_mex]
+    )
+    target_name: str = Field(
+        ..., description="Horizons Target Name or Code", examples=["Mars Express"]
+    )
+
 
 class ElevationResponse(BaseModel):
     times: List[datetime]
     elevations: List[float]
     mean_elevation: float
 
+
 class FilterRequest(BaseModel):
-    data_list: List[FdetsDataModel] = Field(..., description = 'JSON', examples = [[fdets_data_model_example_juice, fdets_data_model_example_mex]])
+    data_list: List[FdetsDataModel] = Field(
+        ...,
+        description="JSON",
+        examples=[[fdets_data_model_example_juice, fdets_data_model_example_mex]],
+    )
     threshold: float = 3.5
+
 
 class PlotParamsRequest(BaseModel):
     data: FdetsDataModel
+
 
 class PlotAllanRequest(BaseModel):
     data_list: List[FdetsDataModel]
     title: str = "Allan Deviation"
 
+
 class PlotFilterRequest(BaseModel):
-    original_data: FdetsDataModel = Field(..., description = 'JSON', examples = [fdets_data_model_example_juice])
-    filtered_data: FdetsDataModel = Field(..., description = 'JSON', examples = [fdets_data_model_example_juice_filtered])
+    original_data: FdetsDataModel = Field(
+        ..., description="JSON", examples=[fdets_data_model_example_juice]
+    )
+    filtered_data: FdetsDataModel = Field(
+        ..., description="JSON", examples=[fdets_data_model_example_juice_filtered]
+    )
+
 
 # --- VISUALIZATION ENDPOINTS ---
+
 
 @app.post("/visualization/parameters")
 def plot_parameters(payload: PlotParamsRequest):
@@ -210,9 +222,7 @@ def plot_parameters(payload: PlotParamsRequest):
         # We pass save_dir so it saves the file, and suppress=True to avoid GUI popups
         try:
             plots.plot_user_parameters(
-                data=domain_data,
-                save_dir=temp_dir,
-                suppress=True
+                data=domain_data, save_dir=temp_dir, suppress=True
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Plotting failed: {str(e)}")
@@ -221,7 +231,9 @@ def plot_parameters(payload: PlotParamsRequest):
         # The function generates a name like "{Station}_{Date}_params.png"
         files = [f for f in os.listdir(temp_dir) if f.endswith(".png")]
         if not files:
-            raise HTTPException(status_code=500, detail="Plot generation failed (no file created).")
+            raise HTTPException(
+                status_code=500, detail="Plot generation failed (no file created)."
+            )
 
         file_path = os.path.join(temp_dir, files[0])
 
@@ -245,7 +257,7 @@ def plot_allan(payload: PlotAllanRequest):
                 data_list=domain_list,
                 title=payload.title,
                 save_dir=temp_dir,
-                suppress=True
+                suppress=True,
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Allan Plot failed: {str(e)}")
@@ -278,10 +290,12 @@ def plot_filter_comparison(payload: PlotFilterRequest):
                 original_data=orig,
                 filtered_data=filt,
                 save_path=save_path,
-                suppress=True
+                suppress=True,
             )
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Comparison Plot failed: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Comparison Plot failed: {str(e)}"
+            )
 
         if not os.path.exists(save_path):
             raise HTTPException(status_code=500, detail="Plot file not found.")
@@ -308,11 +322,12 @@ def convert_mjd_to_utc(mjd: float):
 
 @app.post("/utils/images/combine")
 def combine_images(
-        files: List[UploadFile] = File(...),
-        direction: str = Form("vertical")
+    files: List[UploadFile] = File(...), direction: str = Form("vertical")
 ):
     if len(files) < 2:
-        raise HTTPException(status_code=400, detail="Upload at least 2 images to combine.")
+        raise HTTPException(
+            status_code=400, detail="Upload at least 2 images to combine."
+        )
 
     # 1. Use context manager to handle cleanup automatically
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -335,14 +350,18 @@ def combine_images(
                 image_paths=input_paths,
                 output_dir=temp_dir,
                 output_file_name=output_filename,
-                direction=direction
+                direction=direction,
             )
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Image processing failed: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Image processing failed: {str(e)}"
+            )
 
         result_path = os.path.join(temp_dir, output_filename)
         if not os.path.exists(result_path):
-            raise HTTPException(status_code=500, detail="Image generation failed silently.")
+            raise HTTPException(
+                status_code=500, detail="Image generation failed silently."
+            )
 
         # --- FIX STARTS HERE ---
         # Read the file bytes into memory NOW, while the file still exists.
@@ -355,7 +374,9 @@ def combine_images(
     # Return the bytes directly
     return Response(content=image_bytes, media_type="image/png")
 
+
 # --- EXISTING ENDPOINTS ---
+
 
 @app.post("/io/parse", response_model=FdetsDataModel)
 def parse_fdets_file(file: UploadFile = File(...)):
@@ -374,12 +395,19 @@ def parse_fdets_file(file: UploadFile = File(...)):
 
         return domain_object.to_model()
 
+
 @app.post("/analysis/oadev", response_model=AllanResponse)
 def calculate_allan_deviation(payload: AllanRequest):
     domain_data = payload.data.to_domain()
-    taus, oadev, errors = allan.compute_oadev(domain_data, payload.tau_min, payload.tau_max)
-    if taus is None: raise HTTPException(status_code=400, detail="Insufficient data.")
-    return AllanResponse(taus=taus.tolist(), oadev=oadev.tolist(), errors=errors.tolist())
+    taus, oadev, errors = allan.compute_oadev(
+        domain_data, payload.tau_min, payload.tau_max
+    )
+    if taus is None:
+        raise HTTPException(status_code=400, detail="Insufficient data.")
+    return AllanResponse(
+        taus=taus.tolist(), oadev=oadev.tolist(), errors=errors.tolist()
+    )
+
 
 @app.post("/analysis/elevation", response_model=ElevationResponse)
 def compute_elevation_data(payload: ElevationRequest):
@@ -391,7 +419,7 @@ def compute_elevation_data(payload: ElevationRequest):
     if station_id not in constants.ID_TO_SITE:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown station ID '{station_id}'. See GET /meta/stations for a list of valid IDs."
+            detail=f"Unknown station ID '{station_id}'. See GET /meta/stations for a list of valid IDs.",
         )
 
     # 2. Validate Geodetics
@@ -400,17 +428,22 @@ def compute_elevation_data(payload: ElevationRequest):
     if site_name not in constants.STATION_GEODETIC_POSITIONS:
         raise HTTPException(
             status_code=400,
-            detail=f"No geodetic coordinates found for '{site_name}'. Cannot compute elevation."
+            detail=f"No geodetic coordinates found for '{site_name}'. Cannot compute elevation.",
         )
 
     # 3. Proceed with calculation
     domain_data = payload.data.to_domain()
-    times, elevations, mean_el = geometry.compute_elevation_data(domain_data, payload.target_name)
+    times, elevations, mean_el = geometry.compute_elevation_data(
+        domain_data, payload.target_name
+    )
 
     if times is None:
         raise HTTPException(status_code=404, detail="JPL Horizons query failed.")
 
-    return ElevationResponse(times=times, elevations=elevations.tolist(), mean_elevation=mean_el)
+    return ElevationResponse(
+        times=times, elevations=elevations.tolist(), mean_elevation=mean_el
+    )
+
 
 @app.post("/analysis/filter", response_model=List[FdetsDataModel])
 def filter_observations(payload: FilterRequest):

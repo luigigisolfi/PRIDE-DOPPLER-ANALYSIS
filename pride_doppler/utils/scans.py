@@ -3,8 +3,11 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import re
 import glob
-def split_scan_by_time(input_folder: str, fdets_file: str, time_interval_minutes: float, output_folder: str) -> list[str]:
 
+
+def split_scan_by_time(
+    input_folder: str, fdets_file: str, time_interval_minutes: float, output_folder: str
+) -> list[str]:
     """
     Splits a time-series file into segments based on a given time interval.
 
@@ -38,13 +41,15 @@ def split_scan_by_time(input_folder: str, fdets_file: str, time_interval_minutes
 
     match = re.match(file_pattern, fdets_file)
     if not match:
-        raise ValueError("Error in split_scan_by_time: filename does not match expected pattern")
+        raise ValueError(
+            "Error in split_scan_by_time: filename does not match expected pattern"
+        )
 
     mission, date, the_rest = match.groups()
 
-    with open(input_file, 'r') as file:
+    with open(input_file, "r") as file:
         for line in file:
-            if line.startswith('#'):
+            if line.startswith("#"):
                 header.append(line)  # Store header for each output file
                 continue
 
@@ -64,7 +69,7 @@ def split_scan_by_time(input_folder: str, fdets_file: str, time_interval_minutes
                 output_filepath = os.path.join(output_folder, output_filename)
 
                 # Write segment to file
-                with open(output_filepath, 'w') as out_file:
+                with open(output_filepath, "w") as out_file:
                     out_file.writelines(header)
                     out_file.writelines(segment)
                 output_files.append(output_filepath)
@@ -79,19 +84,22 @@ def split_scan_by_time(input_folder: str, fdets_file: str, time_interval_minutes
         output_filename = f"Fdets.{mission}{date}-{segment_start.strftime('%H%M')}-{segment_end.strftime('%H%M')}{the_rest}"
         output_filepath = os.path.join(output_folder, output_filename)
 
-        with open(output_filepath, 'w') as out_file:
+        with open(output_filepath, "w") as out_file:
             out_file.writelines(header)
             out_file.writelines(segment)
 
-
         output_files.append(output_filepath)
 
-    print(f'Created split scan files:\n{[output_file for output_file in output_files]}\n')
+    print(
+        f"Created split scan files:\n{[output_file for output_file in output_files]}\n"
+    )
 
     return output_files
 
 
-def create_complete_scan_from_single_scans(files: list[str], output_folder: str) -> None:
+def create_complete_scan_from_single_scans(
+    files: list[str], output_folder: str
+) -> None:
     """
     This function concatenates single scans into a big, "complete" one, for ease of analysis.
 
@@ -118,43 +126,53 @@ def create_complete_scan_from_single_scans(files: list[str], output_folder: str)
             scan_number = match.group(5)
 
             # Add the file and its scan number to the corresponding station's list
-            station_files[station_name].append((file, str(scan_number)))  # Store as tuple (file, scan_number)
+            station_files[station_name].append(
+                (file, str(scan_number))
+            )  # Store as tuple (file, scan_number)
 
     # Now, create a complete file for each station
     for station, files in station_files.items():
         # Sort the files based on the scan number (second element of the tuple)
-        files.sort(key=lambda x: x[1])  # Sorting by scan_number (second element of tuple)
+        files.sort(
+            key=lambda x: x[1]
+        )  # Sorting by scan_number (second element of tuple)
 
         first_file = files[0][0]  # Get the first file to derive the output filename
         first_scan = files[0][1]
         base_name = os.path.basename(first_file)  # Get the base name of the input file
         # Construct the output filename by removing the scan number
-        output_filename = base_name.replace(f'{first_scan}.', '')  # Remove the scan number
+        output_filename = base_name.replace(
+            f"{first_scan}.", ""
+        )  # Remove the scan number
 
         # Insert 'complete' before 'r2i' in the output filename
-        output_filename = output_filename.replace('.r2i.txt', '.complete.r2i.txt')
+        output_filename = output_filename.replace(".r2i.txt", ".complete.r2i.txt")
         # Create the complete output path
         output_filename = os.path.join(output_folder, output_filename)
 
         # Open the output file in write mode
-        with open(output_filename, 'w') as output_file:
+        with open(output_filename, "w") as output_file:
             # Flag to check if the header has already been written
             header_written = False
 
             # Loop over each file for the current station, sorted by scan number
             for file, _ in files:
                 # Open the file in read mode
-                with open(file, 'r') as f:
+                with open(file, "r") as f:
                     # Read the lines of the file
                     lines = f.readlines()
 
                     # Skip the header in all files except the first one
                     if not header_written:
                         # Write the first file's header
-                        output_file.write(''.join(lines[:5]))  # Assuming the first 5 lines are the header
+                        output_file.write(
+                            "".join(lines[:5])
+                        )  # Assuming the first 5 lines are the header
                         header_written = True
 
                     # Write the rest of the content, skipping the header lines
-                    output_file.write(''.join(lines[5:]))  # Skip the first 5 lines (the header)
+                    output_file.write(
+                        "".join(lines[5:])
+                    )  # Skip the first 5 lines (the header)
 
         print(f"Created {output_filename}")

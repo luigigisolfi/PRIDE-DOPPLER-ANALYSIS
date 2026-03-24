@@ -9,6 +9,7 @@ import re
 import os
 from collections import defaultdict
 
+
 def extract_vex_block(vex_content: str, block_name: str) -> str:
     """
     Finds a specific block (e.g. $FREQ) in the VEX content string.
@@ -16,6 +17,7 @@ def extract_vex_block(vex_content: str, block_name: str) -> str:
     pattern = f"\\${block_name}\\s*;.*?(\\$|$)"
     match = re.search(pattern, vex_content, re.DOTALL)
     return match.group(0) if match else None
+
 
 def parse_freq_block(block_content: str) -> dict[str, dict[str, dict[str, str]]]:
     """
@@ -27,8 +29,12 @@ def parse_freq_block(block_content: str) -> dict[str, dict[str, dict[str, str]]]
     current_stations = []
 
     # Legacy regex patterns from original code
-    chan_def_pattern = re.compile(r"chan_def\s*=\s*:\s*(\d+(?:\.\d+)? MHz)\s*:\s*(\w+)\s*:\s*(\d+\.\d+ MHz)\s*:\s*(&CH\d+)\s*:\s*(&BBC\d+)\s*:\s*(&\w+);")
-    chan_def_pattern_new = re.compile(r"chan_def\s*=\s*:\s*(\d+(?:\.\d+)? MHz)\s*:\s*(\w+)\s*:\s*(\d+\.\d+ MHz)\s*:\s*(&CH\d+)\s*:\s*(&BBC\d+)\s*:\s*(&\w+);\s*\*\s*(\w+)")
+    chan_def_pattern = re.compile(
+        r"chan_def\s*=\s*:\s*(\d+(?:\.\d+)? MHz)\s*:\s*(\w+)\s*:\s*(\d+\.\d+ MHz)\s*:\s*(&CH\d+)\s*:\s*(&BBC\d+)\s*:\s*(&\w+);"
+    )
+    chan_def_pattern_new = re.compile(
+        r"chan_def\s*=\s*:\s*(\d+(?:\.\d+)? MHz)\s*:\s*(\w+)\s*:\s*(\d+\.\d+ MHz)\s*:\s*(&CH\d+)\s*:\s*(&BBC\d+)\s*:\s*(&\w+);\s*\*\s*(\w+)"
+    )
 
     lines = block_content.splitlines()
 
@@ -51,7 +57,7 @@ def parse_freq_block(block_content: str) -> dict[str, dict[str, dict[str, str]]]
             stations_part = line.split("stations =")[1].strip()
             current_stations = [s.strip() for s in stations_part.split(":")]
             # Remove trailing slash from last station (VEX quirk)
-            current_stations[-1] = current_stations[-1].rstrip('\\')
+            current_stations[-1] = current_stations[-1].rstrip("\\")
             continue
 
         # Global definition fallback
@@ -94,7 +100,10 @@ def parse_freq_block(block_content: str) -> dict[str, dict[str, dict[str, str]]]
 
     return dict(stations_dict)
 
-def get_baseband_frequency_from_file(vex_file_path: str, station_code: str, target_freq_mhz: float) -> float:
+
+def get_baseband_frequency_from_file(
+    vex_file_path: str, station_code: str, target_freq_mhz: float
+) -> float:
     """
     Reads a VEX file and finds the baseband frequency for a station
     that covers the target X-band frequency.
@@ -103,7 +112,7 @@ def get_baseband_frequency_from_file(vex_file_path: str, station_code: str, targ
         print(f"VEX file not found: {vex_file_path}")
         return None
 
-    with open(vex_file_path, 'r') as f:
+    with open(vex_file_path, "r") as f:
         content = f.read()
 
     freq_block = extract_vex_block(content, "FREQ")
@@ -118,8 +127,8 @@ def get_baseband_frequency_from_file(vex_file_path: str, station_code: str, targ
     # Iterate channels to find the one covering the target freq
     channels = parsed_data[station_code]
     for chan_id, info in channels.items():
-        freq_str = info['frequency'].replace(" MHz", "")
-        bw_str = info['bandwidth'].replace(" MHz", "")
+        freq_str = info["frequency"].replace(" MHz", "")
+        bw_str = info["bandwidth"].replace(" MHz", "")
 
         f_start = float(freq_str)
         bw = float(bw_str)

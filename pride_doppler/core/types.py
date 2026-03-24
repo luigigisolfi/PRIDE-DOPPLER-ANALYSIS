@@ -4,11 +4,13 @@ from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 
+
 # --- 1. The Pydantic Model (For API & JSON) ---
 class FdetsDataModel(BaseModel):
     """
     Pydantic schema for data validation and API serialization.
     """
+
     receiving_station_name: str
     utc_datetime: List[datetime]
     utc_date: str
@@ -32,8 +34,9 @@ class FdetsDataModel(BaseModel):
             frequency_detection=np.array(self.frequency_detection),
             first_col_name=self.first_col_name,
             second_col_name=self.second_col_name,
-            fifth_col_name=self.fifth_col_name
+            fifth_col_name=self.fifth_col_name,
         )
+
 
 @dataclass
 class FdetsData:
@@ -41,6 +44,7 @@ class FdetsData:
     Internal domain object optimized for scientific calculation.
     Attributes like signal_to_noise are kept as np.ndarrays.
     """
+
     receiving_station_name: str
     utc_datetime: List[datetime]
     utc_date: str
@@ -64,5 +68,5 @@ class FdetsData:
             frequency_detection=self.frequency_detection.tolist(),
             first_col_name=self.first_col_name,
             second_col_name=self.second_col_name,
-            fifth_col_name=self.fifth_col_name
+            fifth_col_name=self.fifth_col_name,
         )

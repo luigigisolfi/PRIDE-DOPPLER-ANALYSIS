@@ -14,98 +14,98 @@ EXPERIMENTS = {
         "vex_file_name": "gr035.vix",
         "exper_description": "mars_express tracking test",
         "exper_nominal_start": "2013y362d17h40m00s",
-        "exper_nominal_stop": "2013y363d18h30m00s"
+        "exper_nominal_stop": "2013y363d18h30m00s",
     },
     "m0303": {
         "mission_name": "mex",
         "vex_file_name": "m0303.vix",
         "exper_description": "mars express tracking test",
         "exper_nominal_start": "2010y062d20h00m00s",
-        "exper_nominal_stop": "2010y062d21h59m00s"
+        "exper_nominal_stop": "2010y062d21h59m00s",
     },
     "m0325": {
         "mission_name": "mex",
         "vex_file_name": "m0325.vix",
         "exper_description": "mars express tracking test",
         "exper_nominal_start": "2012y085d13h00m00s",
-        "exper_nominal_stop": "2012y085d13h59m00s"
+        "exper_nominal_stop": "2012y085d13h59m00s",
     },
     "m0327": {
         "mission_name": "mex",
         "vex_file_name": "m0327.vix",
         "exper_description": "mars express tracking test",
         "exper_nominal_start": "2012y087d01h30m00s",
-        "exper_nominal_stop": "2012y087d02h49m00s"
+        "exper_nominal_stop": "2012y087d02h49m00s",
     },
     "m0403": {
         "mission_name": "mex",
         "vex_file_name": "m0403.vix",
         "exper_description": "mars express tracking test",
         "exper_nominal_start": "2012y087d01h30m00s",
-        "exper_nominal_stop": "2012y087d02h49m00s"
+        "exper_nominal_stop": "2012y087d02h49m00s",
     },
     "ed045a": {
         "mission_name": "min",
         "vex_file_name": "ed045a.vix",
         "exper_description": "min tracking",
         "exper_nominal_start": "2020y053d01h30m00s",
-        "exper_nominal_stop": "2020y053d03h00m00s"
+        "exper_nominal_stop": "2020y053d03h00m00s",
     },
     "ed045c": {
         "mission_name": "min",
         "vex_file_name": "ed045c.vix",
         "exper_description": "min tracking",
         "exper_nominal_start": "2020y150d08h00m00s",
-        "exper_nominal_stop": "2020y150d09h30m00s"
+        "exper_nominal_stop": "2020y150d09h30m00s",
     },
     "ed045d": {
         "mission_name": "min",
         "vex_file_name": "ed045d.vix",
         "exper_description": "min tracking",
         "exper_nominal_start": "2020y151d08h30m00s",
-        "exper_nominal_stop": "2020y151d10h00m00s"
+        "exper_nominal_stop": "2020y151d10h00m00s",
     },
     "ed045e": {
         "mission_name": "min",
         "vex_file_name": "ed045e.vix",
         "exper_description": "min tracking",
         "exper_nominal_start": "2020y295d02h45m00s",
-        "exper_nominal_stop": "2020y295d04h15m00s"
+        "exper_nominal_stop": "2020y295d04h15m00s",
     },
     "ed045f": {
         "mission_name": "min",
         "vex_file_name": "ed045f.vix",
         "exper_description": "min tracking",
         "exper_nominal_start": "2020y296d02h45m00s",
-        "exper_nominal_stop": "2020y296d04h15m00s"
+        "exper_nominal_stop": "2020y296d04h15m00s",
     },
     "ec094a": {
         "mission_name": "juice",
         "vex_file_name": "ec094a.vix",
         "exper_description": "JUICE tracking",
         "exper_nominal_start": "2023y292d14h00m00s",
-        "exper_nominal_stop": "2023y292d16h00m00s"
+        "exper_nominal_stop": "2023y292d16h00m00s",
     },
     "ec094b": {
         "mission_name": "juice",
         "vex_file_name": "ec094b.vix",
         "exper_description": "JUICE tracking",
         "exper_nominal_start": "2024y066d05h30m00s",
-        "exper_nominal_stop": "2024y066d07h30m00s"
+        "exper_nominal_stop": "2024y066d07h30m00s",
     },
     "ec064": {
-        "mission_name": ["mro", 'mex', 'tgo'],
+        "mission_name": ["mro", "mex", "tgo"],
         "vex_file_name": "ec064.vix",
         "experiment_description": "MRO-TGO-MEX tracking",
         "exper_nominal_start": "2018y155d04h00m00s",
-        "exper_nominal_stop": "2018y155d06h00m00s"
+        "exper_nominal_stop": "2018y155d06h00m00s",
     },
     "v140314": {
         "mission_name": "vex",
         "vex_file_name": "v0314.vix",
         "experiment_description": "VEX tracking",
         "exper_nominal_start": "2014y073d08h30m00s",
-        "exper_nominal_stop": "2014y073d11h29m00s"
+        "exper_nominal_stop": "2014y073d11h29m00s",
     },
 }
 
@@ -119,7 +119,7 @@ SPACECRAFT_DATA = {
         "antenna": "Ww",
         "snr": 0,
         "stochastic_noise": "0",
-        "updated": "00.00.2010"
+        "updated": "00.00.2010",
     },
     "bco": {
         "mission_name": "bepi colombo",
@@ -127,7 +127,7 @@ SPACECRAFT_DATA = {
         "antenna": "Cd",
         "snr": 6317,
         "stochastic_noise": "84 mHz",
-        "updated": "17.02.2021"
+        "updated": "17.02.2021",
     },
     "tgo": {
         "mission_name": "exomars - trace gas orbiter",
@@ -135,7 +135,7 @@ SPACECRAFT_DATA = {
         "antenna": "Ht",
         "snr": 11500,
         "stochastic_noise": "90 mHz",
-        "updated": "29.07.2017"
+        "updated": "29.07.2017",
     },
     "exo": {
         "mission_name": "exomars",
@@ -143,7 +143,7 @@ SPACECRAFT_DATA = {
         "antenna": "Xx",
         "snr": 0,
         "stochastic_noise": "0",
-        "updated": "00.00.0000"
+        "updated": "00.00.0000",
     },
     "gai": {
         "mission_name": "gaia",
@@ -151,7 +151,7 @@ SPACECRAFT_DATA = {
         "antenna": "Xx",
         "snr": 0,
         "stochastic_noise": "0",
-        "updated": "00.00.0000"
+        "updated": "00.00.0000",
     },
     "her": {
         "mission_name": "herschell",
@@ -159,7 +159,7 @@ SPACECRAFT_DATA = {
         "antenna": "Xx",
         "snr": 0,
         "stochastic_noise": "0",
-        "updated": "00.00.0000"
+        "updated": "00.00.0000",
     },
     "huy": {
         "mission_name": "huygens",
@@ -167,7 +167,7 @@ SPACECRAFT_DATA = {
         "antenna": "Xx",
         "snr": 0,
         "stochastic_noise": "0",
-        "updated": "00.00.0000"
+        "updated": "00.00.0000",
     },
     "ika": {
         "mission_name": "ikaros",
@@ -175,7 +175,7 @@ SPACECRAFT_DATA = {
         "antenna": "Ww",
         "snr": 0,
         "stochastic_noise": "0",
-        "updated": "00.00.2010"
+        "updated": "00.00.2010",
     },
     "jno": {
         "mission_name": "juno",
@@ -183,7 +183,7 @@ SPACECRAFT_DATA = {
         "antenna": "Ho",
         "snr": 450,
         "stochastic_noise": "150 mHz",
-        "updated": "07.09.2020"
+        "updated": "07.09.2020",
     },
     "mex": {
         "mission_name": "mars express",
@@ -191,7 +191,7 @@ SPACECRAFT_DATA = {
         "antenna": "Cd",
         "snr": 10000,
         "stochastic_noise": "30 mHz",
-        "updated": "22.02.2020"
+        "updated": "22.02.2020",
     },
     "min": {
         "mission_name": "mars insight",
@@ -199,7 +199,7 @@ SPACECRAFT_DATA = {
         "antenna": "T6",
         "snr": 120,
         "stochastic_noise": "300 mHz",
-        "updated": "25.07.2020"
+        "updated": "25.07.2020",
     },
     "mod": {
         "mission_name": "mars odyssey",
@@ -207,7 +207,7 @@ SPACECRAFT_DATA = {
         "antenna": "Cd",
         "snr": 360,
         "stochastic_noise": "830 mHz",
-        "updated": "22.02.2020"
+        "updated": "22.02.2020",
     },
     "mom": {
         "mission_name": "mars orbiter mission",
@@ -215,7 +215,7 @@ SPACECRAFT_DATA = {
         "antenna": "Xx",
         "snr": 0,
         "stochastic_noise": "0",
-        "updated": "00.00.0000"
+        "updated": "00.00.0000",
     },
     "perseverance": {
         "mission_name": "perseverance",
@@ -223,7 +223,7 @@ SPACECRAFT_DATA = {
         "antenna": "Cd",
         "snr": 115000,
         "stochastic_noise": "88 mHz",
-        "updated": "18.02.2021"
+        "updated": "18.02.2021",
     },
     "m20": {
         "mission_name": "mars2020",
@@ -231,7 +231,7 @@ SPACECRAFT_DATA = {
         "antenna": "??",
         "snr": 0,
         "stochastic_noise": "0",
-        "updated": "00.00.0000"
+        "updated": "00.00.0000",
     },
     "mro": {
         "mission_name": "mars reconnaissance orbiter",
@@ -239,7 +239,7 @@ SPACECRAFT_DATA = {
         "antenna": "Cd",
         "snr": 30,
         "stochastic_noise": "23.70 Hz",
-        "updated": "22.02.2020"
+        "updated": "22.02.2020",
     },
     "mvn": {
         "mission_name": "maven",
@@ -247,7 +247,7 @@ SPACECRAFT_DATA = {
         "antenna": "Xx",
         "snr": 0,
         "stochastic_noise": "0",
-        "updated": "00.00.0000"
+        "updated": "00.00.0000",
     },
     "curiosity": {
         "mission_name": "curiosity",
@@ -255,7 +255,7 @@ SPACECRAFT_DATA = {
         "antenna": None,
         "snr": None,
         "stochastic_noise": None,
-        "updated": None
+        "updated": None,
     },
     "hope": {
         "mission_name": "hope",
@@ -263,7 +263,7 @@ SPACECRAFT_DATA = {
         "antenna": None,
         "snr": None,
         "stochastic_noise": None,
-        "updated": None
+        "updated": None,
     },
     "ras": {
         "mission_name": "radio astron",
@@ -271,7 +271,7 @@ SPACECRAFT_DATA = {
         "antenna": "Wz",
         "snr": 32000,
         "stochastic_noise": "3 mHz",
-        "updated": "29.09.2012"
+        "updated": "29.09.2012",
     },
     "ros": {
         "mission_name": "rosetta",
@@ -279,7 +279,7 @@ SPACECRAFT_DATA = {
         "antenna": "Mh",
         "snr": 898,
         "stochastic_noise": "40 mHz",
-        "updated": "01.04.2016"
+        "updated": "01.04.2016",
     },
     "sta": {
         "mission_name": "stereo ab",
@@ -287,7 +287,7 @@ SPACECRAFT_DATA = {
         "antenna": "Wz",
         "snr": 3000,
         "stochastic_noise": "200 mHz",
-        "updated": "06.02.2012"
+        "updated": "06.02.2012",
     },
     "tiw": {
         "mission_name": "tianwen-1",
@@ -295,7 +295,7 @@ SPACECRAFT_DATA = {
         "antenna": "Cd",
         "snr": None,
         "stochastic_noise": "1.0",
-        "updated": "01.04.2021"
+        "updated": "01.04.2021",
     },
     "uly": {
         "mission_name": "ulysses",
@@ -303,7 +303,7 @@ SPACECRAFT_DATA = {
         "antenna": "Xx",
         "snr": 0,
         "stochastic_noise": "0",
-        "updated": "00.00.0000"
+        "updated": "00.00.0000",
     },
     "vex": {
         "mission_name": "venus express",
@@ -311,7 +311,7 @@ SPACECRAFT_DATA = {
         "antenna": "Ht",
         "snr": 9500,
         "stochastic_noise": "26 mHz",
-        "updated": "21.04.2011"
+        "updated": "21.04.2011",
     },
     "juc": {
         "mission_name": "juice",
@@ -319,141 +319,141 @@ SPACECRAFT_DATA = {
         "antenna": None,
         "snr": None,
         "stochastic_noise": None,
-        "updated": None
-    }
+        "updated": None,
+    },
 }
 
 # -----------------------------------------------------------------------------
 # Antenna Diameters
 # -----------------------------------------------------------------------------
 ANTENNA_DIAMETERS = {
-    'Cd': 30,   # Ceduna
-    'Hb': 12,   # Hobart 12m
-    'Ho': 26,    # Hobart 26
-    'Yg': 12,   # Yarragadee 12m
-    'Ke': 12,   # Katherine 12m
-    'Ww': 12,   # Warkworth
-    'Ym': 32,   # Yamaguchi 32m
-    'T6': 65,   # Tianma 65m
-    'Km': 40,   # Kunming
-    'Ku': 21,   # KVN Ulsan
-    'Bd': 32,   # Badary
-    'Ur': 25,   # Urumqi
-    'Zc': 32,   # Zelenchukskaya
-    'Hh': 26,   # Hartebeesthoek
-    'Wz': 20,   # Wettzell
-    'Sv': 32,   # Svetloe
-    'Mc': 32,   # Medicina
-    'Wb': 25,   # Westerbork (single dish)
-    'On': 60,   # Onsala 60m
-    'O6': 60,   # Onsala 60m
-    'Ys': 40,   # Yebes 40m
-    'Sc': 25,   # VLBA Saint Croix
-    'Hn': 25,   # VLBA Hancock
-    'Nl': 25,   # VLBA North Liberty
-    'Fd': 25,   # VLBA Fort Davis
-    'La': 25,   # VLBA Los Alamos
-    'Kp': 25,   # VLBA Kitt Peak
-    'Pt': 25,   # VLBA Pie Town
-    'Br': 25,   # VLBA Brewster
-    'Ov': 25,   # VLBA Owens Valley
-    'Mk': 25,   # VLBA Mauna Kea
-    'Ht': 15,   # HartRAO 15m
-    'Mh': 14,   # Metsähovi
-    'Ef': 100,  # Effelsberg
-    'Tr': 32,   # Torun
-    'Nt': 32,   # Noto
-    'Ir': 32,   # Irbene
-    'Ib': 32,   # Irbene
-    'Mp': 15,   # Siding Spring
-    'Wn': 13    # Wettzell 13m
+    "Cd": 30,  # Ceduna
+    "Hb": 12,  # Hobart 12m
+    "Ho": 26,  # Hobart 26
+    "Yg": 12,  # Yarragadee 12m
+    "Ke": 12,  # Katherine 12m
+    "Ww": 12,  # Warkworth
+    "Ym": 32,  # Yamaguchi 32m
+    "T6": 65,  # Tianma 65m
+    "Km": 40,  # Kunming
+    "Ku": 21,  # KVN Ulsan
+    "Bd": 32,  # Badary
+    "Ur": 25,  # Urumqi
+    "Zc": 32,  # Zelenchukskaya
+    "Hh": 26,  # Hartebeesthoek
+    "Wz": 20,  # Wettzell
+    "Sv": 32,  # Svetloe
+    "Mc": 32,  # Medicina
+    "Wb": 25,  # Westerbork (single dish)
+    "On": 60,  # Onsala 60m
+    "O6": 60,  # Onsala 60m
+    "Ys": 40,  # Yebes 40m
+    "Sc": 25,  # VLBA Saint Croix
+    "Hn": 25,  # VLBA Hancock
+    "Nl": 25,  # VLBA North Liberty
+    "Fd": 25,  # VLBA Fort Davis
+    "La": 25,  # VLBA Los Alamos
+    "Kp": 25,  # VLBA Kitt Peak
+    "Pt": 25,  # VLBA Pie Town
+    "Br": 25,  # VLBA Brewster
+    "Ov": 25,  # VLBA Owens Valley
+    "Mk": 25,  # VLBA Mauna Kea
+    "Ht": 15,  # HartRAO 15m
+    "Mh": 14,  # Metsähovi
+    "Ef": 100,  # Effelsberg
+    "Tr": 32,  # Torun
+    "Nt": 32,  # Noto
+    "Ir": 32,  # Irbene
+    "Ib": 32,  # Irbene
+    "Mp": 15,  # Siding Spring
+    "Wn": 13,  # Wettzell 13m
 }
 
 # -----------------------------------------------------------------------------
 # Station ID Mappings
 # -----------------------------------------------------------------------------
 SITE_TO_ID = {
-    'CEDUNA': 'Cd',
-    'HOBART12': 'Hb',
-    'HOBART26': 'Ho',
-    'YARRA12M': 'Yg',
-    'KATH12M': 'Ke',
-    'WARK': 'Ww',
-    'YAMAGU32': 'Ym',
-    'TIANMA65': 'T6',
-    'KUNMING': 'Km',
-    'KVNUS': 'Ku',
-    'BADARY': 'Bd',
-    'URUMQI': 'Ur',
-    'ZELENCHK': 'Zc',
-    'HARTRAO': 'Hh',
-    'WETTZELL': 'Wz',
-    'SVETLOE': 'Sv',
-    'MEDICINA': 'Mc',
-    'WSTRBORK': 'Wb',
-    'ONSALA60': 'On',
-    'YEBES40M': 'Ys',
-    'VLBA_SC': 'Sc',
-    'VLBA_HN': 'Hn',
-    'VLBA_NL': 'Nl',
-    'VLBA_FD': 'Fd',
-    'VLBA_LA': 'La',
-    'VLBA_KP': 'Kp',
-    'PIETOWN': 'Pt',
-    'VLBA_BR': 'Br',
-    'VLBA_OV': 'Ov',
-    'VLBA_MK': 'Mk',
-    'HART15M': 'Ht',
-    'METSAHOV': 'Mh',
-    'EFLSBERG': 'Ef',
-    'TORUN': 'Tr',
-    'NOTO': 'Nt',
-    'IRBENE': 'Ir',
-    'SIDINGSPRING': 'Mp',
-    'WETTZ13N': 'Wn'
+    "CEDUNA": "Cd",
+    "HOBART12": "Hb",
+    "HOBART26": "Ho",
+    "YARRA12M": "Yg",
+    "KATH12M": "Ke",
+    "WARK": "Ww",
+    "YAMAGU32": "Ym",
+    "TIANMA65": "T6",
+    "KUNMING": "Km",
+    "KVNUS": "Ku",
+    "BADARY": "Bd",
+    "URUMQI": "Ur",
+    "ZELENCHK": "Zc",
+    "HARTRAO": "Hh",
+    "WETTZELL": "Wz",
+    "SVETLOE": "Sv",
+    "MEDICINA": "Mc",
+    "WSTRBORK": "Wb",
+    "ONSALA60": "On",
+    "YEBES40M": "Ys",
+    "VLBA_SC": "Sc",
+    "VLBA_HN": "Hn",
+    "VLBA_NL": "Nl",
+    "VLBA_FD": "Fd",
+    "VLBA_LA": "La",
+    "VLBA_KP": "Kp",
+    "PIETOWN": "Pt",
+    "VLBA_BR": "Br",
+    "VLBA_OV": "Ov",
+    "VLBA_MK": "Mk",
+    "HART15M": "Ht",
+    "METSAHOV": "Mh",
+    "EFLSBERG": "Ef",
+    "TORUN": "Tr",
+    "NOTO": "Nt",
+    "IRBENE": "Ir",
+    "SIDINGSPRING": "Mp",
+    "WETTZ13N": "Wn",
 }
 
 ID_TO_SITE = {
-    'Cd': 'CEDUNA',
-    'Hb': 'HOBART12',
-    'Ho': 'HOBART26',
-    'Yg': 'YARRA12M',
-    'Ke': 'KATH12M',
-    'Ww': 'WARK',
-    'Ym': 'YAMAGU32',
-    'T6': 'TIANMA65',
-    'Km': 'KUNMING',
-    'Ku': 'KVNUS',
-    'Bd': 'BADARY',
-    'Ur': 'URUMQI',
-    'Zc': 'ZELENCHK',
-    'Hh': 'HARTRAO',
-    'Ht': 'HART15M',
-    'Mh': 'METSAHOV',
-    'Wz': 'WETTZELL',
-    'Sv': 'SVETLOE',
-    'Mc': 'MEDICINA',
-    'Wb': 'WSTRBORK',
-    'On': 'ONSALA60',
-    'O6': 'ONSALA60',
-    'Ys': 'YEBES40M',
-    'Sc': 'SC-VLBA',
-    'Hn': 'HN-VLBA',
-    'Nl': 'NL-VLBA',
-    'Fd': 'FD-VLBA',
-    'La': 'LA-VLBA',
-    'Kp': 'KP-VLBA',
-    'Br': 'BR-VLBA',
-    'Ov': 'OV-VLBA',
-    'Mk': 'MK-VLBA',
-    'Pt': 'PIETOWN',
-    'Tr': 'TORUN',
-    'Ef': 'EFLSBERG',
-    'Nt': 'NOTO',
-    'Ir': 'IRBENE',
-    'Ib': 'IRBENE',
-    'Mp': 'SIDINGSPRING',
-    'Wn': 'WETTZ13N'
+    "Cd": "CEDUNA",
+    "Hb": "HOBART12",
+    "Ho": "HOBART26",
+    "Yg": "YARRA12M",
+    "Ke": "KATH12M",
+    "Ww": "WARK",
+    "Ym": "YAMAGU32",
+    "T6": "TIANMA65",
+    "Km": "KUNMING",
+    "Ku": "KVNUS",
+    "Bd": "BADARY",
+    "Ur": "URUMQI",
+    "Zc": "ZELENCHK",
+    "Hh": "HARTRAO",
+    "Ht": "HART15M",
+    "Mh": "METSAHOV",
+    "Wz": "WETTZELL",
+    "Sv": "SVETLOE",
+    "Mc": "MEDICINA",
+    "Wb": "WSTRBORK",
+    "On": "ONSALA60",
+    "O6": "ONSALA60",
+    "Ys": "YEBES40M",
+    "Sc": "SC-VLBA",
+    "Hn": "HN-VLBA",
+    "Nl": "NL-VLBA",
+    "Fd": "FD-VLBA",
+    "La": "LA-VLBA",
+    "Kp": "KP-VLBA",
+    "Br": "BR-VLBA",
+    "Ov": "OV-VLBA",
+    "Mk": "MK-VLBA",
+    "Pt": "PIETOWN",
+    "Tr": "TORUN",
+    "Ef": "EFLSBERG",
+    "Nt": "NOTO",
+    "Ir": "IRBENE",
+    "Ib": "IRBENE",
+    "Mp": "SIDINGSPRING",
+    "Wn": "WETTZ13N",
 }
 
 # -----------------------------------------------------------------------------
@@ -464,7 +464,7 @@ HORIZONS_TARGETS = {
     "jui": {"target": "2023-053A"},
     "min": {"target": "2018-042A"},
     "mro": {"target": "2005-029A"},
-    "vex": {"target": "2005-045A"}
+    "vex": {"target": "2005-045A"},
 }
 
 # -----------------------------------------------------------------------------
@@ -686,5 +686,5 @@ STATION_GEODETIC_POSITIONS = {
     "YELLOWKN": [177.2139637870714, 62.47935368942611, -114.4723859957144],
     "YLOW7296": [179.2000213805586, 62.480580725828226, -114.47930564717619],
     "YUMA": [239.00944708194584, 32.9391349412873, -114.20313658885976],
-    "ZELENCHK": [1175.4649443980306, 43.78780970706245, 41.56516243341224]
+    "ZELENCHK": [1175.4649443980306, 43.78780970706245, 41.56516243341224],
 }

@@ -12,9 +12,11 @@ import math
 # MJD Reference: November 17, 1858
 MJD_EPOCH = datetime(1858, 11, 17, 0, 0, 0)
 
+
 def mjd_to_utc(mjd: float) -> datetime.date:
     """Converts Modified Julian Date (MJD) to a UTC date object."""
     return (MJD_EPOCH + timedelta(days=mjd)).date()
+
 
 def utc_to_mjd(utc_date_str: str) -> float:
     """
@@ -24,10 +26,11 @@ def utc_to_mjd(utc_date_str: str) -> float:
         utc_date = datetime.strptime(utc_date_str, "%Y.%m.%d")
     except ValueError:
         # Fallback for different separators if needed, though original specified dot
-        utc_date = datetime.strptime(utc_date_str.replace('-', '.'), "%Y.%m.%d")
+        utc_date = datetime.strptime(utc_date_str.replace("-", "."), "%Y.%m.%d")
 
     delta = utc_date - MJD_EPOCH
     return delta.days + (delta.seconds / 86400.0)
+
 
 def mjd_utc_seconds_to_utc(mjd: float, utc_seconds: float) -> datetime:
     """
@@ -52,7 +55,10 @@ def mjd_utc_seconds_to_utc(mjd: float, utc_seconds: float) -> datetime:
     final_utc = utc_time + timedelta(seconds=utc_seconds)
     return final_utc
 
-def format_observation_time(observation_date_str: str, time_in_seconds: float) -> datetime:
+
+def format_observation_time(
+    observation_date_str: str, time_in_seconds: float
+) -> datetime:
     """
     Combines 'YYYY.MM.DD' string and seconds-of-day into a datetime.
     """
@@ -66,12 +72,15 @@ def format_observation_time(observation_date_str: str, time_in_seconds: float) -
     minutes, seconds = divmod(remainder, 60)
     microseconds = round(frac_seconds * 1_000_000)
 
-    time_delta = timedelta(hours=hours, minutes=minutes, seconds=seconds, microseconds=microseconds)
+    time_delta = timedelta(
+        hours=hours, minutes=minutes, seconds=seconds, microseconds=microseconds
+    )
     full_dt = obs_date + time_delta
 
     # Strip microseconds to match original string format behavior if necessary
     # or return strict object. Returning object is safer.
     return full_dt
+
 
 def parse_datetime_flexible(t: str) -> datetime:
     """
@@ -81,7 +90,7 @@ def parse_datetime_flexible(t: str) -> datetime:
         "%Y-%m-%d %H:%M:%S.%f",
         "%Y-%m-%d %H:%M:%S",
         "%Y-%m-%dT%H:%M:%S.%f",
-        "%Y-%m-%dT%H:%M:%S"
+        "%Y-%m-%dT%H:%M:%S",
     ]
 
     t_str = str(t)
@@ -92,6 +101,7 @@ def parse_datetime_flexible(t: str) -> datetime:
             continue
 
     raise ValueError(f"Time format not recognized: {t}")
+
 
 def list_yymm(start_date: datetime, end_date: datetime) -> dict:
     """
