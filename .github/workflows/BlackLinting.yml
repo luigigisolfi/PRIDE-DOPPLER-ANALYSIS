@@ -1,0 +1,40 @@
+name: Format Code
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run without committing changes?'
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Black with Jupyter
+        # This ensures the 'black' command in the next step has what it needs
+        run: pip install "black[jupyter]"
+
+      - name: Run Black
+        # We run the CLI directly. Black will find .py and .ipynb files automatically.
+        run: black . --verbose
+
+      - name: Commit changes
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: ":art: Manual Format code with Black"
