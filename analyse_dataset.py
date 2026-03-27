@@ -45,9 +45,7 @@ Z_SCORE_THRESHOLD = 3.5
 start_date = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
 end_date = datetime.datetime(2026, 12, 31, tzinfo=datetime.timezone.utc)
 missions_to_analyse = ["jui"]
-# root_dir = "./analysed_pride_data"
-root_dir = "/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/analysed_pride_data"
-
+root_dir = "./analysed_pride_data"
 
 def find_experiment(yymmdd_str):
     """
