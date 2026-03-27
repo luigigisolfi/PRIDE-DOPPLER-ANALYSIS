@@ -44,8 +44,8 @@ Z_SCORE_THRESHOLD = 3.5
 # Dates & Paths
 start_date = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
 end_date = datetime.datetime(2026, 12, 31, tzinfo=datetime.timezone.utc)
-missions_to_analyse = ["mex"]
-#root_dir = "./analysed_pride_data"
+missions_to_analyse = ["mro"]
+# root_dir = "./analysed_pride_data"
 root_dir = "/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/analysed_pride_data"
 
 
@@ -152,12 +152,12 @@ for mission, days in yymmdd_folders_per_mission.items():
             print(f"  > N = {len(raw_data_list)} stations to process for this day.")
             # 1. Filter Comparison Plot (if enabled)
             if ZSCORE_FILTERING_FLAG and COMPARE_FILTERS_FLAG:
-                for original_data, processed_data in zip(raw_data_list, filtered_data_list):
+                for original_data, filtered_data in zip(raw_data_list, filtered_data_list):
                     station_name = original_data.receiving_station_name
                     print(f"    - Processing station: {station_name}")
                     plot_filter_comparison(
                         original_data=original_data,
-                        filtered_data=processed_data,
+                        filtered_data=filtered_data,
                         save_path=os.path.join(
                             output_dir,
                             "filter_comparison",
@@ -167,11 +167,11 @@ for mission, days in yymmdd_folders_per_mission.items():
                     )
 
             # --- Save Gaussian Fit to Statistics Folder ---
-            for processed_data in filtered_data_list:
-                station_name = processed_data.receiving_station_name
+            for filtered_data in filtered_data_list:
+                station_name = filtered_data.receiving_station_name
                 if PLOT_GAUSSIAN_FLAG:
                     plot_gaussian(
-                        filtered_doppler_noise=processed_data.doppler_noise_hz,
+                        filtered_doppler_noise=filtered_data.doppler_noise_hz,
                         station_code=station_name,
                         mission_name=mission,
                         save_dir=os.path.join(
@@ -182,7 +182,7 @@ for mission, days in yymmdd_folders_per_mission.items():
                 # 2. Time Series Plot (SNR, Doppler, Fdets)
                 # This plot needs to be generated so combine_plots can find it later.
                 plot_user_parameters(
-                    processed_data,
+                    filtered_data,
                     save_dir=os.path.join(output_dir, "user_defined_parameters"),
                     suppress=True,
                 )
@@ -190,7 +190,7 @@ for mission, days in yymmdd_folders_per_mission.items():
                 # 3. Elevation Logic
                 # A. CALCULATION (Analysis Layer)
                 times, elevations, mean_el = compute_elevation_data(
-                    processed_data, target_name=horizons_id
+                    filtered_data, target_name=horizons_id
                 )
 
                 # B. VISUALIZATION (Vis Layer) - Returns nothing
@@ -203,11 +203,13 @@ for mission, days in yymmdd_folders_per_mission.items():
                     suppress=True,
                 )
 
+                print(f"Fdets sampling in seconds: {filtered_data.fdets_sampling_in_seconds}")
+                print(f"Dividing rms noise by sqrt({10/filtered_data.fdets_sampling_in_seconds})")
                 # 4. Collect Statistics for this station
-                mean_snr = np.mean(processed_data.signal_to_noise)
-                rms_snr = np.std(processed_data.signal_to_noise)
-                mean_dopp = np.mean(processed_data.doppler_noise_hz)
-                rms_dopp = np.std(processed_data.doppler_noise_hz)
+                mean_snr = np.mean(filtered_data.signal_to_noise)
+                rms_snr = np.std(filtered_data.signal_to_noise)
+                mean_dopp = np.mean(filtered_data.doppler_noise_hz)
+                rms_dopp = np.std(filtered_data.doppler_noise_hz)/np.sqrt(10/filtered_data.fdets_sampling_in_seconds)
 
                 exp_name = find_experiment(day)
                 mean_rms_stats[exp_name].append(
@@ -223,8 +225,8 @@ for mission, days in yymmdd_folders_per_mission.items():
                 )
 
                 # 5. Combine Plots (TimeSeries + Elevation) for this station
-                ts_name = f"{station_name}_{processed_data.utc_date}_params.png"
-                el_name = f"{station_name}_{processed_data.utc_date}_elevation.png"
+                ts_name = f"{station_name}_{filtered_data.utc_date}_params.png"
+                el_name = f"{station_name}_{filtered_data.utc_date}_elevation.png"
                 ts_path = os.path.join(output_dir, "user_defined_parameters", ts_name)
                 el_path = os.path.join(output_dir, "elevation", el_name)
 

@@ -27,6 +27,7 @@ class FdetsDataModel(BaseModel):
     utc_datetime: List[datetime]
     utc_date: str
     base_frequency: float
+    fdets_sampling_in_seconds: float
     signal_to_noise: List[float]
     doppler_noise_hz: List[float]
     frequency_detection: List[float]
@@ -41,6 +42,7 @@ class FdetsDataModel(BaseModel):
             utc_datetime=self.utc_datetime,
             utc_date=self.utc_date,
             base_frequency=self.base_frequency,
+            fdets_sampling_in_seconds=self.fdets_sampling_in_seconds,
             signal_to_noise=np.array(self.signal_to_noise),
             doppler_noise_hz=np.array(self.doppler_noise_hz),
             frequency_detection=np.array(self.frequency_detection),
@@ -73,6 +75,7 @@ class FdetsData:
     utc_datetime: List[datetime]
     utc_date: str
     base_frequency: float
+    fdets_sampling_in_seconds: float
     signal_to_noise: np.ndarray
     doppler_noise_hz: np.ndarray
     frequency_detection: np.ndarray
@@ -87,6 +90,7 @@ class FdetsData:
             utc_datetime=self.utc_datetime,
             utc_date=self.utc_date,
             base_frequency=self.base_frequency,
+            fdets_sampling_in_seconds=self.fdets_sampling_in_seconds,
             signal_to_noise=self.signal_to_noise.tolist(),
             doppler_noise_hz=self.doppler_noise_hz.tolist(),
             frequency_detection=self.frequency_detection.tolist(),

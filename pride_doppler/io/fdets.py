@@ -6,12 +6,11 @@ Connects raw file I/O with the FdetsData dataclass.
 """
 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
 
 from pride_doppler.core.types import FdetsData
 from pride_doppler.utils import time as time_utils
-
 
 def get_station_name_from_file(filename: str) -> str:
     """
@@ -71,6 +70,31 @@ def get_columns_names(filename: str) -> dict[str, str]:
 
         return col_map
 
+def get_fdets_sampling_in_seconds(filename: str) -> str:
+    """
+    """
+    with open(filename, "r") as file:
+        lines = file.readlines()
+
+        # Method 1: Header Regex
+        header_line = lines[1]
+        match = re.search(
+            r"dT: ([\d\.]+)", header_line
+        )
+        if match:
+            return float(match.group(1))
+        else:
+
+            try:
+                dt0 = datetime.strptime(lines[5].split(' ')[0], "%Y-%m-%dT%H:%M:%S.%f")
+                dt1 = datetime.strptime(lines[6].split(' ')[0], "%Y-%m-%dT%H:%M:%S.%f")
+                fdets_sampling_in_seconds = (dt1-dt0).total_seconds()
+
+                return fdets_sampling_in_seconds
+
+            except:
+                raise ValueError('It was not possible to determine fdets sampling time in seconds.')
+    return None
 
 def get_observation_date(filename: str, first_col_name: str) -> str:
     """
@@ -135,6 +159,8 @@ def extract_parameters(filename: str) -> FdetsData:
     # 1. Analyze Columns
     col_info = get_columns_names(filename)
     n_cols = col_info.get("number_of_columns", 0)
+
+    fdets_sampling_in_seconds = get_fdets_sampling_in_seconds(filename)
 
     # 2. Get Date
     first_col = col_info.get("first_col_name", "")
@@ -233,4 +259,5 @@ def extract_parameters(filename: str) -> FdetsData:
         first_col_name=col_info.get("first_col_name", ""),
         second_col_name=col_info.get("second_col_name", ""),
         fifth_col_name=col_info.get("fifth_col_name", ""),
+        fdets_sampling_in_seconds=fdets_sampling_in_seconds,
     )
