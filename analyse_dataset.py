@@ -43,9 +43,10 @@ Z_SCORE_THRESHOLD = 3.5
 
 # Dates & Paths
 start_date = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
-end_date = datetime.datetime(2026, 12, 31, tzinfo=timezone.utc)
-missions_to_analyse = ["jui"]
-root_dir = "./analysed_pride_data"
+end_date = datetime.datetime(2026, 12, 31, tzinfo=datetime.timezone.utc)
+missions_to_analyse = ["mex"]
+#root_dir = "./analysed_pride_data"
+root_dir = "/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/analysed_pride_data"
 
 
 def find_experiment(yymmdd_str):
@@ -136,122 +137,124 @@ for mission, days in yymmdd_folders_per_mission.items():
                             raw_data_list.append(data_obj)
 
             if not raw_data_list:
-                print(f"No valid fdets found in {input_dir}")
-                continue
+                raise ValueError(f"No valid fdets found in {input_dir}.  Please, double check your directory content.")
 
-            filtered_data_list = raw_data_list  # Default to raw if not filtering
             if ZSCORE_FILTERING_FLAG:
                 print("Applying Z-score filtering")
                 # This creates a new list of filtered data objects
                 filtered_data_list = filter_data_zscore(
                     raw_data_list, threshold=Z_SCORE_THRESHOLD
                 )
+            else:
+                filtered_data_list = raw_data_list  # Default to raw if not filtering
 
-        print(f"  > Found {len(raw_data_list)} stations to process for this day.")
-        for original_data, processed_data in zip(raw_data_list, filtered_data_list):
-            station_name = original_data.receiving_station_name
-            print(f"    - Processing station: {station_name}")
 
+            print(f"  > N = {len(raw_data_list)} stations to process for this day.")
             # 1. Filter Comparison Plot (if enabled)
             if ZSCORE_FILTERING_FLAG and COMPARE_FILTERS_FLAG:
-                plot_filter_comparison(
-                    original_data=original_data,
-                    filtered_data=processed_data,
-                    save_path=os.path.join(
-                        output_dir,
-                        "filter_comparison",
-                        f"{station_name}_filter_comp.png",
-                    ),
+                for original_data, processed_data in zip(raw_data_list, filtered_data_list):
+                    station_name = original_data.receiving_station_name
+                    print(f"    - Processing station: {station_name}")
+                    plot_filter_comparison(
+                        original_data=original_data,
+                        filtered_data=processed_data,
+                        save_path=os.path.join(
+                            output_dir,
+                            "filter_comparison",
+                            f"{station_name}_filter_comp.png",
+                        ),
+                        suppress=True,
+                    )
+
+            # --- Save Gaussian Fit to Statistics Folder ---
+            for processed_data in filtered_data_list:
+                station_name = processed_data.receiving_station_name
+                if PLOT_GAUSSIAN_FLAG:
+                    plot_gaussian(
+                        filtered_doppler_noise=processed_data.doppler_noise_hz,
+                        station_code=station_name,
+                        mission_name=mission,
+                        save_dir=os.path.join(
+                            output_dir, "statistics"
+                        ),
+                    )
+
+                # 2. Time Series Plot (SNR, Doppler, Fdets)
+                # This plot needs to be generated so combine_plots can find it later.
+                plot_user_parameters(
+                    processed_data,
+                    save_dir=os.path.join(output_dir, "user_defined_parameters"),
                     suppress=True,
                 )
 
-            # --- Save Gaussian Fit to Statistics Folder ---
-            if PLOT_GAUSSIAN_FLAG:
-                plot_gaussian(
-                    filtered_doppler_noise=processed_data.doppler_noise_hz,
-                    station_code=station_name,
-                    mission_name=mission,
-                    save_dir=os.path.join(
-                        output_dir, "statistics"
-                    ),  # <--- Target folder
+                # 3. Elevation Logic
+                # A. CALCULATION (Analysis Layer)
+                times, elevations, mean_el = compute_elevation_data(
+                    processed_data, target_name=horizons_id
                 )
 
-            # 2. Time Series Plot (SNR, Doppler, Fdets)
-            # This plot needs to be generated so combine_plots can find it later.
-            plot_user_parameters(
-                processed_data,
-                save_dir=os.path.join(output_dir, "user_defined_parameters"),
-                suppress=True,
-            )
+                # B. VISUALIZATION (Vis Layer) - Returns nothing
+                plot_elevation_profile(
+                    times,
+                    elevations,
+                    station_name=station_name,
+                    mission_name=mission,
+                    save_dir=os.path.join(output_dir, "elevation"),
+                    suppress=True,
+                )
 
-            # 3. Elevation Logic
-            # A. CALCULATION (Analysis Layer)
-            times, elevations, mean_el = compute_elevation_data(
-                processed_data, target_name=horizons_id
-            )
+                # 4. Collect Statistics for this station
+                mean_snr = np.mean(processed_data.signal_to_noise)
+                rms_snr = np.std(processed_data.signal_to_noise)
+                mean_dopp = np.mean(processed_data.doppler_noise_hz)
+                rms_dopp = np.std(processed_data.doppler_noise_hz)
 
-            # B. VISUALIZATION (Vis Layer) - Returns nothing
-            plot_elevation_profile(
-                times,
-                elevations,
-                station_name=station_name,
-                mission_name=mission,
-                save_dir=os.path.join(output_dir, "elevation"),
-                suppress=True,
-            )
-
-            # 4. Collect Statistics for this station
-            mean_snr = np.mean(processed_data.signal_to_noise)
-            rms_snr = np.std(processed_data.signal_to_noise)
-            mean_dopp = np.mean(processed_data.doppler_noise_hz)
-            rms_dopp = np.std(processed_data.doppler_noise_hz)
-
-            exp_name = find_experiment(day)
-            mean_rms_stats[exp_name].append(
-                {
-                    station_name: {
-                        "mean_snr": mean_snr,
-                        "rms_snr": rms_snr,
-                        "mean_doppler_noise": mean_dopp,
-                        "rms_doppler_noise": rms_dopp,
-                        "mean_elevation": mean_el,
+                exp_name = find_experiment(day)
+                mean_rms_stats[exp_name].append(
+                    {
+                        station_name: {
+                            "mean_snr": mean_snr,
+                            "rms_snr": rms_snr,
+                            "mean_doppler_noise": mean_dopp,
+                            "rms_doppler_noise": rms_dopp,
+                            "mean_elevation": mean_el,
+                        }
                     }
-                }
-            )
+                )
 
-            # 5. Combine Plots (TimeSeries + Elevation) for this station
-            ts_name = f"{station_name}_{processed_data.utc_date}_params.png"
-            el_name = f"{station_name}_{processed_data.utc_date}_elevation.png"
-            ts_path = os.path.join(output_dir, "user_defined_parameters", ts_name)
-            el_path = os.path.join(output_dir, "elevation", el_name)
+                # 5. Combine Plots (TimeSeries + Elevation) for this station
+                ts_name = f"{station_name}_{processed_data.utc_date}_params.png"
+                el_name = f"{station_name}_{processed_data.utc_date}_elevation.png"
+                ts_path = os.path.join(output_dir, "user_defined_parameters", ts_name)
+                el_path = os.path.join(output_dir, "elevation", el_name)
 
-            combine_plots(
-                [ts_path, el_path],
-                output_dir=os.path.join(output_dir, "combined"),
-                output_file_name=f"{station_name}_combined.png",
-            )
+                combine_plots(
+                    [ts_path, el_path],
+                    output_dir=os.path.join(output_dir, "combined"),
+                    output_file_name=f"{station_name}_combined.png",
+                )
 
-        # =====================================================================
-        # --- D. Aggregate Plots for the Day (After processing all stations) ---
-        # =====================================================================
-        print("  > Generating aggregate plots for the day...")
+            # =====================================================================
+            # --- D. Aggregate Plots for the Day (After processing all stations) ---
+            # =====================================================================
+            print("  > Generating aggregate plots for the day...")
 
-        # 1. Aggregate Histograms
-        plot_histograms(
-            filtered_data_list,  # Use the list of all (filtered) stations for this day
-            param="doppler",
-            save_dir=os.path.join(output_dir, "statistics"),
-            suppress=True,
-        )
-
-        # 2. Aggregate Allan Deviation Plot
-        if ALLAN_DEVIATIONS_FLAG:
-            plot_allan_deviation(
-                data_list=filtered_data_list,  # Use the list of all (filtered) stations
-                title=f"Allan Deviation - {folder_name}",
-                save_dir=os.path.join(output_dir, "allan_deviations"),
+            # 1. Aggregate Histograms
+            plot_histograms(
+                data_list=filtered_data_list,  # Use the list of all (filtered) stations for this day
+                param="doppler",
+                save_dir=os.path.join(output_dir, "statistics"),
                 suppress=True,
             )
+
+            # 2. Aggregate Allan Deviation Plot
+            if ALLAN_DEVIATIONS_FLAG:
+                plot_allan_deviation(
+                    data_list=filtered_data_list,  # Use the list of all (filtered) stations
+                    title=f"Allan Deviation - {folder_name}",
+                    save_dir=os.path.join(output_dir, "allan_deviations"),
+                    suppress=True,
+                )
 
         plt.close("all")
 
