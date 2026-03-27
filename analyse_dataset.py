@@ -44,7 +44,7 @@ Z_SCORE_THRESHOLD = 3.5
 # Dates & Paths
 start_date = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
 end_date = datetime.datetime(2026, 12, 31, tzinfo=datetime.timezone.utc)
-missions_to_analyse = ["mro"]
+missions_to_analyse = ["jui"]
 # root_dir = "./analysed_pride_data"
 root_dir = "/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/analysed_pride_data"
 
@@ -328,21 +328,22 @@ for experiment_name, station_list in mean_rms_stats.items():
                     )
                     continue
 
+
+            if station == "Nt" and experiment_name == "ec094b":
+                print('Manually removing Noto for JUICE, experiment ec094b.')
+                scans_to_remove[experiment_name].append(station) # Manually Remove Noto for JUICE ec094b
             # --- Plotting ---
             marker_style = {"fmt": "o", "markersize": 6, "alpha": 0.6, "color": color}
 
             # Standard Points
             # 1. Station Code vs SNR
-            if station == "Nt" and curr_mission == "jui":
-                continue
+            #if station == "Nt" and curr_mission == "ec094b":
                 # ax1.errorbar(station, mean_snr, label=label, marker = 'x', markersize = 10, color = 'red')
             ax1.errorbar(station, mean_snr, label=label, **marker_style)
 
             # 2. SNR vs RMS Doppler Noise
-            # if station == 'Nt':
+            #if station == "Nt" and curr_mission == "ec094b":
             #    ax2.errorbar(mean_snr, rms_doppler_mhz, label=label, marker = 'x', markersize = 6)
-            if station == "Nt" and curr_mission == "jui":
-                continue
             ax2.errorbar(mean_snr, rms_doppler_mhz, label=label, **marker_style)
             ax2.annotate(station, (mean_snr, rms_doppler_mhz), fontsize=6, alpha=0.7)
 
