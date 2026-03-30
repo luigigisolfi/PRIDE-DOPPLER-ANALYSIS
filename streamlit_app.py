@@ -498,9 +498,15 @@ if st.session_state.data_loaded and st.session_state.processing_queue:
         mean_dopp = (
             np.mean(p_data.doppler_noise_hz) if len(p_data.doppler_noise_hz) > 0 else 0
         )
-        rms_dopp = (
+        rms_dopp_raw = (
             np.std(p_data.doppler_noise_hz) if len(p_data.doppler_noise_hz) > 0 else 0
         )
+        sampling = getattr(p_data, "fdets_sampling_in_seconds", 10.0)
+
+        if sampling is not None and sampling > 0:
+            rms_dopp = rms_dopp_raw / np.sqrt(10.0 / sampling)
+        else:
+            rms_dopp = rms_dopp_raw
         if not show_bad and abs(mean_dopp) > bad_thresh_mhz:
             return None
         _, _, mean_el = get_cached_elevation(p_data, hid)
@@ -589,6 +595,11 @@ if st.session_state.data_loaded and st.session_state.processing_queue:
                 )
                 st.metric("Elevation", f"{mean_el:.1f}°")
                 st.metric("Base Frequency", f"{target_data.base_frequency/1e6:.2f} MHz")
+                sampling_time = getattr(target_data, "fdets_sampling_in_seconds", None)
+                if sampling_time is not None:
+                    st.metric("Sampling Time", f"{sampling_time:.1f} s")
+                else:
+                    st.metric("Sampling Time", "Unknown")
                 if times:
                     fig_el, ax_el = plt.subplots(figsize=(4, 2.5))
                     ax_el.plot(times, els, color="green")
