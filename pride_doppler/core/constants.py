@@ -90,14 +90,14 @@ EXPERIMENTS = {
         "exper_nominal_stop": "2020y296d04h15m00s",
     },
     "ec094a": {
-        "mission_name": "juice",
+        "mission_name": "jui",
         "vex_file_name": "ec094a.vix",
         "exper_description": "JUICE tracking",
         "exper_nominal_start": "2023y292d14h00m00s",
         "exper_nominal_stop": "2023y292d16h00m00s",
     },
     "ec094b": {
-        "mission_name": "juice",
+        "mission_name": "jui",
         "vex_file_name": "ec094b.vix",
         "exper_description": "JUICE tracking",
         "exper_nominal_start": "2024y066d05h30m00s",

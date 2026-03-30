@@ -12,6 +12,7 @@ import numpy as np
 from pride_doppler.core.types import FdetsData
 from pride_doppler.utils import time as time_utils
 
+
 def get_station_name_from_file(filename: str) -> str:
     """
     Extracts the station code from the filename using a regular expression.
@@ -70,31 +71,20 @@ def get_columns_names(filename: str) -> dict[str, str]:
 
         return col_map
 
-def get_fdets_sampling_in_seconds(filename: str) -> str:
+def get_fdets_sampling_in_seconds(filename: str) -> int:
     """
+    Naive way of retrieving Fdets sampling in seconds.
+    However naive, this is the most robust method,
+    since some (older) Fdets have an unreliable dT field in the header,
+    hence we cannot reliably use regex group matching for our dataset.
     """
     with open(filename, "r") as file:
         lines = file.readlines()
+        dt0 = datetime.strptime(lines[5].split(' ')[0], "%Y-%m-%dT%H:%M:%S.%f")
+        dt1 = datetime.strptime(lines[6].split(' ')[0], "%Y-%m-%dT%H:%M:%S.%f")
+        fdets_sampling_in_seconds = np.floor((dt1-dt0).total_seconds())
 
-        # Method 1: Header Regex
-        header_line = lines[1]
-        match = re.search(
-            r"dT: ([\d\.]+)", header_line
-        )
-        if match:
-            return float(match.group(1))
-        else:
-
-            try:
-                dt0 = datetime.strptime(lines[5].split(' ')[0], "%Y-%m-%dT%H:%M:%S.%f")
-                dt1 = datetime.strptime(lines[6].split(' ')[0], "%Y-%m-%dT%H:%M:%S.%f")
-                fdets_sampling_in_seconds = (dt1-dt0).total_seconds()
-
-                return fdets_sampling_in_seconds
-
-            except:
-                raise ValueError('It was not possible to determine fdets sampling time in seconds.')
-    return None
+    return fdets_sampling_in_seconds
 
 def get_observation_date(filename: str, first_col_name: str) -> str:
     """

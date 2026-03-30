@@ -44,8 +44,9 @@ Z_SCORE_THRESHOLD = 3.5
 # Dates & Paths
 start_date = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
 end_date = datetime.datetime(2026, 12, 31, tzinfo=datetime.timezone.utc)
-missions_to_analyse = ["jui"]
-root_dir = "./analysed_pride_data"
+missions_to_analyse = ["jui"]#, "mex", "min", "mro", "vex"]
+#root_dir = "./analysed_pride_data"
+root_dir = "/Users/lgisolfi/Desktop/PRIDE_DATA_NEW/analysed_pride_data/"
 
 def find_experiment(yymmdd_str):
     """
@@ -88,11 +89,10 @@ yymm_dict = list_yymm(start_date, end_date)
 days_list = [d for sublist in yymm_dict.values() for d in sublist]
 yymmdd_folders_per_mission = defaultdict(list)
 
-
 for mission in missions_to_analyse:
     mission_root = os.path.join(root_dir, mission)
     if not os.path.exists(mission_root):
-        continue
+        raise ValueError(f"Mission root path: {mission_root} does not exist.")
 
     for day in days_list:
         if mission == "vex" and not day.startswith("1401"):

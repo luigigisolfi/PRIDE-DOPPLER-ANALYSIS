@@ -180,7 +180,6 @@ def get_elevation_plot(
 
             plt.plot(times, elevations, label=f"{station_id} ({site_name})")
 
-            print(times)
             for t, el in zip(times, elevations):
                 txt_output_lines.append(f"{t} | {el:.2f}")
 
@@ -563,27 +562,28 @@ def plot_gaussian(filtered_doppler_noise, station_code, mission_name, save_dir=N
     mu, std = norm.fit(filtered_doppler_noise * 1000)
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 5))
-    ax.hist(
-        filtered_doppler_noise * 1000, bins=60, density=True, alpha=0.6, color="skyblue"
+    counts, bins, _ = ax.hist(
+        filtered_doppler_noise * 1000, bins=60, density=False, alpha=0.6, color="skyblue"
     )
 
-    # Generate PDF curve
+    # Generate PDF curve scaled to the number of occurrences
     xmin, xmax = ax.get_xlim()
     x = np.linspace(xmin, xmax, 100)
-    p = norm.pdf(x, mu, std)
+    bin_width = bins[1] - bins[0]
+    p = norm.pdf(x, mu, std) * len(filtered_doppler_noise) * bin_width
 
     ax.plot(
         x,
         p,
         "r",
         linewidth=2,
-        label=f"Gaussian fit: μ={mu:.3f}, σ={std:.3f}",
+        label=f"Gaussian fit: $\mu$={mu:.3f}, $\sigma$={std:.3f}",
         linestyle="--",
     )
 
     ax.set_title(f"{mission_name.upper()} - Gaussian Fit | Station: {station_code}")
     ax.set_xlabel("Doppler Noise [mHz]")
-    ax.set_ylabel("Probability Density")
+    ax.set_ylabel("Occurrences")
     ax.legend()
     ax.grid(True, alpha=0.3)
 
