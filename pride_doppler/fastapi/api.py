@@ -415,7 +415,6 @@ def compute_elevation_data(payload: ElevationRequest):
     # The station name is inside the 'data' object
     station_id = payload.data.receiving_station_name
 
-    # Check if this station exists in your constants
     if station_id not in constants.ID_TO_SITE:
         raise HTTPException(
             status_code=400,

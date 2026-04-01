@@ -113,7 +113,6 @@ def create_complete_scan_from_single_scans(
     """
 
     os.makedirs(output_folder, exist_ok=True)
-    # Define the base pattern for your files (without the station part)
     file_pattern = r"Fdets\.\w+(\d{4})\.(\d{2})\.(\d{2})\.(\w{2})\.(\d{4})\.r2i\.txt"
 
     # Create a dictionary to store file handles for each station

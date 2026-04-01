@@ -277,8 +277,6 @@ def plot_allan_deviation(
     plt.figure(figsize=(10, 6))
 
     for data in data_list:
-        # Use the dedicated analysis function
-        # Ensure compute_oadev is imported in your script
         taus, oadev, err = compute_oadev(data, tau_min=1, tau_max=1000)
         if taus is not None and len(taus) > 0:
             plt.loglog(taus, oadev, ".-", label=data.receiving_station_name)

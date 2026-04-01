@@ -53,9 +53,6 @@ def find_experiment(yymmdd_str):
     Check if a yymmdd string falls into any experiment interval defined in constants.py.
     """
     try:
-        # Parse 'yymmdd' to datetime (Assumes 2000+)
-        # Note: Your original code handled 'yymmddHHMM', but the folder names seem to be 'yymmdd'
-        # Adjust format if your input string includes time.
         current_dt = datetime.datetime.strptime(yymmdd_str, "%y%m%d").replace(
             tzinfo=datetime.timezone.utc
         )
@@ -74,7 +71,6 @@ def find_experiment(yymmdd_str):
             )
 
             # Check if current date falls within this experiment
-            # Note: We compare the whole day. You might want to refine logic if boundaries are tight.
             if start.date() <= current_dt.date() <= stop.date():
                 return exp_name
         except ValueError:
