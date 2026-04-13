@@ -3,10 +3,10 @@ This module provides filtering utilities for PRIDE Doppler data, including
 Z-score based outlier detection and noise-level validation for FdetsData
 objects and parameter dictionaries.
 """
+
 import numpy as np
 from ..core.types import FdetsData
 from typing import List, Dict, Union, Tuple
-
 
 
 def filter_data_zscore(

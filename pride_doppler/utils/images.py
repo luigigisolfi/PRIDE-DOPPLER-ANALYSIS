@@ -12,7 +12,7 @@ def combine_plots(
         image_paths (list[str]): List of file paths to the images to be combined.
         output_dir (str): Directory where the combined image will be saved.
         output_file_name (str): Name of the output file.
-        direction (str, optional): Direction to stack images, either "vertical" or "horizontal". 
+        direction (str, optional): Direction to stack images, either "vertical" or "horizontal".
             Defaults to "vertical".
     """
     if not image_paths:

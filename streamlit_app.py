@@ -103,12 +103,16 @@ def get_time_series_fig(data):
         color="orange",
         lw=0.5,
         s=7,
-        )
+    )
     axs[1].set_ylabel("Doppler Noise [mHz]")
     axs[1].grid(True, alpha=0.3)
 
     axs[2].scatter(
-        data.utc_datetime, data.frequency_detection / 1e6, marker="o", color="black", s=5
+        data.utc_datetime,
+        data.frequency_detection / 1e6,
+        marker="o",
+        color="black",
+        s=5,
     )
     axs[2].set_ylabel("Freq Det [MHz]")
     axs[2].set_xlabel("UTC Time")
@@ -159,7 +163,7 @@ def get_comparison_fig(raw, filtered):
         s=6,
         lw=0.5,
         label="Removed",
-        )
+    )
     ax2.scatter(
         filtered.utc_datetime,
         filtered.doppler_noise_hz * 1e3,
@@ -169,7 +173,7 @@ def get_comparison_fig(raw, filtered):
         s=7,
         label="Kept",
         alpha=0.5,
-        )
+    )
     ax2.set_ylabel("Doppler Noise [mHz]")
     ax2.grid(True, alpha=0.3)
 
@@ -180,7 +184,7 @@ def get_comparison_fig(raw, filtered):
         color="blue",
         s=6,
         label="Removed",
-        )
+    )
     ax3.scatter(
         filtered.utc_datetime,
         filtered.frequency_detection / 1e6,
@@ -189,7 +193,7 @@ def get_comparison_fig(raw, filtered):
         s=7,
         label="Kept",
         alpha=0.5,
-        )
+    )
     ax3.set_ylabel("Freq Det [MHz]")
     ax3.set_xlabel("UTC Time")
     ax3.grid(True, alpha=0.3)
@@ -269,12 +273,14 @@ def get_mission_summary_plot(stats_df):
         # 4. Plotting
         # Plot 1: Station vs SNR
         if st_name == "Nt" and experiment_name == "ec094b":
-            ax1.errorbar(st_name, snr, label=label, marker = 'x', markersize = 10, color = 'red')
+            ax1.errorbar(
+                st_name, snr, label=label, marker="x", markersize=10, color="red"
+            )
         ax1.errorbar(st_name, snr, label=label, **marker_style)
 
         # Plot 2: SNR vs RMS Doppler
         if st_name == "Nt" and experiment_name == "ec094b":
-            ax2.errorbar(snr, rms, label=label, marker = 'x', markersize = 10, color = 'red')
+            ax2.errorbar(snr, rms, label=label, marker="x", markersize=10, color="red")
         ax2.errorbar(snr, rms, label=label, **marker_style)
         ax2.annotate(st_name, (snr, rms), fontsize=10, alpha=0.7)
 
@@ -642,7 +648,9 @@ if st.session_state.data_loaded and st.session_state.processing_queue:
                 bin_width = bin_edges[1] - bin_edges[0]
                 x = np.linspace(ax_g.get_xlim()[0], ax_g.get_xlim()[1], 100)
                 # Scale PDF by (total count * bin width) to match frequency histogram
-                ax_g.plot(x, norm.pdf(x, mu, std) * len(noise_mhz) * bin_width, "r--", lw=1)
+                ax_g.plot(
+                    x, norm.pdf(x, mu, std) * len(noise_mhz) * bin_width, "r--", lw=1
+                )
                 ax_g.set_title(
                     f"{target_data.mission_name.upper()}- Gaussian Fit of Doppler Noise | Station: {p_data.receiving_station_name}",
                     fontsize=5,
