@@ -38,7 +38,7 @@ def get_columns_names(filename: str) -> dict[str, str]:
         filename (str): Path to the Fdets file.
 
     Returns:
-        dict[str, str]: A dictionary containing the number of columns and 
+        dict[str, str]: A dictionary containing the number of columns and
                         the names of the detected columns.
     """
     with open(filename, "r") as file:
@@ -71,6 +71,7 @@ def get_columns_names(filename: str) -> dict[str, str]:
 
         return col_map
 
+
 def get_fdets_sampling_in_seconds(filename: str) -> int:
     """
     Naive way of retrieving Fdets sampling in seconds.
@@ -80,11 +81,12 @@ def get_fdets_sampling_in_seconds(filename: str) -> int:
     """
     with open(filename, "r") as file:
         lines = file.readlines()
-        dt0 = datetime.strptime(lines[5].split(' ')[0], "%Y-%m-%dT%H:%M:%S.%f")
-        dt1 = datetime.strptime(lines[6].split(' ')[0], "%Y-%m-%dT%H:%M:%S.%f")
-        fdets_sampling_in_seconds = np.floor((dt1-dt0).total_seconds())
+        dt0 = datetime.strptime(lines[5].split(" ")[0], "%Y-%m-%dT%H:%M:%S.%f")
+        dt1 = datetime.strptime(lines[6].split(" ")[0], "%Y-%m-%dT%H:%M:%S.%f")
+        fdets_sampling_in_seconds = np.floor((dt1 - dt0).total_seconds())
 
     return fdets_sampling_in_seconds
+
 
 def get_observation_date(filename: str, first_col_name: str) -> str:
     """

@@ -16,8 +16,8 @@ def compute_elevation_data(
         target_name (str): The JPL Horizons identifier for the target body.
 
     Returns:
-        tuple[list[datetime], np.array, float] | None: A tuple containing the list of 
-            datetimes, an array of elevation angles, and the mean elevation. 
+        tuple[list[datetime], np.array, float] | None: A tuple containing the list of
+            datetimes, an array of elevation angles, and the mean elevation.
             Returns None if the station is unknown.
     """
     station_id = data.receiving_station_name

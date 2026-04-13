@@ -1,9 +1,9 @@
 """
 PRIDE Doppler Data Characterization Script
 -----------------------------------------------------
-This script processes PRIDE Doppler data by scanning mission directories, 
-extracting parameters from frequency detection files, applying Z-score 
-filtering, and generating various diagnostic plots (SNR, Doppler noise, 
+This script processes PRIDE Doppler data by scanning mission directories,
+extracting parameters from frequency detection files, applying Z-score
+filtering, and generating various diagnostic plots (SNR, Doppler noise,
 elevation, Allan deviation, and Gaussian fits).
 """
 
@@ -44,8 +44,9 @@ Z_SCORE_THRESHOLD = 3.5
 # Dates & Paths
 start_date = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
 end_date = datetime.datetime(2026, 12, 31, tzinfo=datetime.timezone.utc)
-missions_to_analyse = ["jui"]#, "mex", "min", "mro", "vex"]
+missions_to_analyse = ["jui"]  # , "mex", "min", "mro", "vex"]
 root_dir = "./analysed_pride_data"
+
 
 def find_experiment(yymmdd_str):
     """
@@ -65,12 +66,12 @@ def find_experiment(yymmdd_str):
         # Parse the start/stop strings from constants (e.g., "2023y292d14h00m00s")
         try:
             fmt = "%Yy%jd%Hh%Mm%Ss"
-            start = datetime.datetime.strptime(exp_data["exper_nominal_start"], fmt).replace(
-                tzinfo=datetime.timezone.utc
-            )
-            stop = datetime.datetime.strptime(exp_data["exper_nominal_stop"], fmt).replace(
-                tzinfo=datetime.timezone.utc
-            )
+            start = datetime.datetime.strptime(
+                exp_data["exper_nominal_start"], fmt
+            ).replace(tzinfo=datetime.timezone.utc)
+            stop = datetime.datetime.strptime(
+                exp_data["exper_nominal_stop"], fmt
+            ).replace(tzinfo=datetime.timezone.utc)
 
             # Check if current date falls within this experiment
             # Note: We compare the whole day. You might want to refine logic if boundaries are tight.
@@ -134,7 +135,9 @@ for mission, days in yymmdd_folders_per_mission.items():
                             raw_data_list.append(data_obj)
 
             if not raw_data_list:
-                raise ValueError(f"No valid fdets found in {input_dir}.  Please, double check your directory content.")
+                raise ValueError(
+                    f"No valid fdets found in {input_dir}.  Please, double check your directory content."
+                )
 
             if ZSCORE_FILTERING_FLAG:
                 print("Applying Z-score filtering")
@@ -145,11 +148,12 @@ for mission, days in yymmdd_folders_per_mission.items():
             else:
                 filtered_data_list = raw_data_list  # Default to raw if not filtering
 
-
             print(f"  > N = {len(raw_data_list)} stations to process for this day.")
             # 1. Filter Comparison Plot (if enabled)
             if ZSCORE_FILTERING_FLAG and COMPARE_FILTERS_FLAG:
-                for original_data, filtered_data in zip(raw_data_list, filtered_data_list):
+                for original_data, filtered_data in zip(
+                    raw_data_list, filtered_data_list
+                ):
                     station_name = original_data.receiving_station_name
                     print(f"    - Processing station: {station_name}")
                     plot_filter_comparison(
@@ -171,9 +175,7 @@ for mission, days in yymmdd_folders_per_mission.items():
                         filtered_doppler_noise=filtered_data.doppler_noise_hz,
                         station_code=station_name,
                         mission_name=mission,
-                        save_dir=os.path.join(
-                            output_dir, "statistics"
-                        ),
+                        save_dir=os.path.join(output_dir, "statistics"),
                     )
 
                 # 2. Time Series Plot (SNR, Doppler, Fdets)
@@ -200,13 +202,19 @@ for mission, days in yymmdd_folders_per_mission.items():
                     suppress=True,
                 )
 
-                print(f"Fdets sampling in seconds: {filtered_data.fdets_sampling_in_seconds}")
-                print(f"Dividing rms noise by sqrt({10/filtered_data.fdets_sampling_in_seconds})")
+                print(
+                    f"Fdets sampling in seconds: {filtered_data.fdets_sampling_in_seconds}"
+                )
+                print(
+                    f"Dividing rms noise by sqrt({10/filtered_data.fdets_sampling_in_seconds})"
+                )
                 # 4. Collect Statistics for this station
                 mean_snr = np.mean(filtered_data.signal_to_noise)
                 rms_snr = np.std(filtered_data.signal_to_noise)
                 mean_dopp = np.mean(filtered_data.doppler_noise_hz)
-                rms_dopp = np.std(filtered_data.doppler_noise_hz)/np.sqrt(10/filtered_data.fdets_sampling_in_seconds)
+                rms_dopp = np.std(filtered_data.doppler_noise_hz) / np.sqrt(
+                    10 / filtered_data.fdets_sampling_in_seconds
+                )
 
                 exp_name = find_experiment(day)
                 mean_rms_stats[exp_name].append(
@@ -325,21 +333,22 @@ for experiment_name, station_list in mean_rms_stats.items():
                     )
                     continue
 
-
             if station == "Nt" and experiment_name == "ec094b":
-                print('Manually removing Noto for JUICE, experiment ec094b.')
-                scans_to_remove[experiment_name].append(station) # Manually Remove Noto for JUICE ec094b
+                print("Manually removing Noto for JUICE, experiment ec094b.")
+                scans_to_remove[experiment_name].append(
+                    station
+                )  # Manually Remove Noto for JUICE ec094b
             # --- Plotting ---
             marker_style = {"fmt": "o", "markersize": 6, "alpha": 0.6, "color": color}
 
             # Standard Points
             # 1. Station Code vs SNR
-            #if station == "Nt" and curr_mission == "ec094b":
-                # ax1.errorbar(station, mean_snr, label=label, marker = 'x', markersize = 10, color = 'red')
+            # if station == "Nt" and curr_mission == "ec094b":
+            # ax1.errorbar(station, mean_snr, label=label, marker = 'x', markersize = 10, color = 'red')
             ax1.errorbar(station, mean_snr, label=label, **marker_style)
 
             # 2. SNR vs RMS Doppler Noise
-            #if station == "Nt" and curr_mission == "ec094b":
+            # if station == "Nt" and curr_mission == "ec094b":
             #    ax2.errorbar(mean_snr, rms_doppler_mhz, label=label, marker = 'x', markersize = 6)
             ax2.errorbar(mean_snr, rms_doppler_mhz, label=label, **marker_style)
             ax2.annotate(station, (mean_snr, rms_doppler_mhz), fontsize=6, alpha=0.7)

@@ -26,11 +26,11 @@ from scipy.stats import norm
 def get_plot_color(mission: str, exp_name: str):
     """
     Returns a consistent color mapping for specific missions or experiments.
-    
+
     Args:
         mission: The mission identifier (e.g., 'vex', 'mro').
         exp_name: The experiment identifier (e.g., 'ed045a').
-        
+
     Returns:
         A string representing a matplotlib-compatible color.
     """
@@ -563,7 +563,11 @@ def plot_gaussian(filtered_doppler_noise, station_code, mission_name, save_dir=N
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 5))
     counts, bins, _ = ax.hist(
-        filtered_doppler_noise * 1000, bins=60, density=False, alpha=0.6, color="skyblue"
+        filtered_doppler_noise * 1000,
+        bins=60,
+        density=False,
+        alpha=0.6,
+        color="skyblue",
     )
 
     # Generate PDF curve scaled to the number of occurrences
