@@ -75,7 +75,7 @@ def plot_user_parameters(
     )
     axs[0].set_ylabel("SNR")
     axs[0].grid(True)
-    axs[0].set_title(f"Station: {data.receiving_station_name} | Date: {data.utc_date}")
+    axs[0].set_title(f"Station: {data.receiving_station_name} | Date: {data.utc_date}", size=18)
 
     # Doppler
     axs[1].plot(
@@ -93,9 +93,11 @@ def plot_user_parameters(
     axs[2].plot(
         data.utc_datetime, data.frequency_detection, "o", color="black", markersize=2
     )
-    axs[2].set_ylabel("Freq Det [Hz]")
-    axs[2].set_xlabel("UTC Time")
+    axs[2].set_ylabel("Freq Det [Hz]", size = 15)
+    axs[2].set_xlabel("UTC Time", size = 15)
     axs[2].grid(True)
+    for ax in axs:
+        ax.tick_params(axis='both', which='major', labelsize=12)
 
     # Format Date Axis
     axs[2].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
@@ -188,10 +190,11 @@ def get_elevation_plot(
 
     plt.ylabel("Elevation [deg]")
     plt.xlabel("UTC Time")
-    plt.title(f"Elevation: {target_name} ({mission_name})")
-    plt.legend()
+    plt.title(f"Elevation: {target_name} ({mission_name})", size=18)
+    plt.legend(fontsize="medium", prop={'size': plt.rcParams['legend.fontsize'] + 3 if isinstance(plt.rcParams['legend.fontsize'], (int, float)) else 13})
     plt.grid(True)
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    plt.gca().tick_params(axis='both', which='major', labelsize=12)
 
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
@@ -241,9 +244,10 @@ def plot_histograms(
     plt.figure(figsize=(10, 6))
     sns.displot(df, x="Value", hue="Station", kind="kde", fill=True)
 
-    plt.title(f"{param.upper()} Distribution")
+    plt.title(f"{param.upper()} Distribution", size=18)
     if param == "snr":
         plt.xscale("log")
+    plt.gca().tick_params(axis='both', which='major', labelsize=12)
 
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
@@ -323,8 +327,8 @@ def plot_allan_deviation(
     plt.grid(True, which="both", ls="--", alpha=0.2)
     plt.xlabel("Averaging Time (τ) [s]")
     plt.ylabel("Overlapping Allan Deviation")
-    plt.legend()
-    plt.title(title)
+    plt.legend(fontsize="medium", prop={'size': plt.rcParams['legend.fontsize'] + 3 if isinstance(plt.rcParams['legend.fontsize'], (int, float)) else 13}, ncol=3, loc='lower left')
+    plt.title(title, size=18)
 
     # --- FORMATTING CHANGE ---
     ax = plt.gca()
@@ -332,6 +336,7 @@ def plot_allan_deviation(
     ax.xaxis.set_major_formatter(ScalarFormatter())
     # Disable scientific notation (e.g., 1e2)
     ax.ticklabel_format(style="plain", axis="x")
+    ax.tick_params(axis='both', which='major', labelsize=12)
     # -------------------------
 
     if save_dir:
@@ -401,11 +406,12 @@ def plot_filter_comparison(
     )
 
     ax1.set_title(
-        f"Filter Comparison | Station: {original_data.receiving_station_name} | Date: {original_data.utc_date}"
+        f"Filter Comparison | Station: {original_data.receiving_station_name} | Date: {original_data.utc_date}",
+        size=18
     )
-    ax1.set_ylabel("Signal-to-Noise Ratio (SNR)")
+    ax1.set_ylabel("Signal-to-Noise Ratio (SNR)", size = 15)
     ax1.grid(True)
-    ax1.legend()
+    ax1.legend(fontsize="medium", prop={'size': plt.rcParams['legend.fontsize'] + 3 if isinstance(plt.rcParams['legend.fontsize'], (int, float)) else 13})
 
     # --- 2. Doppler Noise Comparison Plot ---
     # Convert to mHz for plotting
@@ -433,16 +439,18 @@ def plot_filter_comparison(
         alpha=0.9,
     )
 
-    ax2.set_xlabel(f"UTC Time")
-    ax2.set_ylabel("Doppler Noise [mHz]")
+    ax2.set_xlabel(f"UTC Time", size = 15)
+    ax2.set_ylabel("Doppler Noise [mHz]", size = 15)
     ax2.grid(True)
-    ax2.legend()
+    ax2.legend(fontsize="medium", prop={'size': plt.rcParams['legend.fontsize'] + 3 if isinstance(plt.rcParams['legend.fontsize'], (int, float)) else 13})
 
     # --- Formatting ---
     ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
     locator = MaxNLocator(prune="both", nbins=20)
     ax2.xaxis.set_major_locator(locator)
     plt.setp(ax2.get_xticklabels(), rotation=45, ha="right")
+    ax1.tick_params(axis='both', which='major', labelsize=12)
+    ax2.tick_params(axis='both', which='major', labelsize=12)
 
     plt.tight_layout()
 
@@ -515,14 +523,15 @@ def plot_elevation_profile(
 
     ax.plot(times, elevations, label=station_name)
 
-    ax.set_ylabel("Elevation [deg]")
-    ax.set_xlabel("UTC Time")
-    ax.set_title(f"Elevation Profile: {mission_name} - {station_name}")
+    ax.set_ylabel("Elevation [deg]", size = 15)
+    ax.set_xlabel("UTC Time", size = 15)
+    ax.set_title(f"Elevation Profile: {mission_name} - {station_name}", size=18)
     ax.grid(True)
-    ax.legend()
+    ax.legend(fontsize="medium", prop={'size': plt.rcParams['legend.fontsize'] + 3 if isinstance(plt.rcParams['legend.fontsize'], (int, float)) else 13})
 
     # Format Time Axis
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    ax.tick_params(axis='both', which='major', labelsize=12)
 
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
@@ -579,11 +588,12 @@ def plot_gaussian(filtered_doppler_noise, station_code, mission_name, save_dir=N
         linestyle="--",
     )
 
-    ax.set_title(f"{mission_name.upper()} - Gaussian Fit | Station: {station_code}")
-    ax.set_xlabel("Doppler Noise [mHz]")
-    ax.set_ylabel("Occurrences")
-    ax.legend()
+    ax.set_title(f"{mission_name.upper()} - Gaussian Fit | Station: {station_code}", size=18)
+    ax.set_xlabel("Doppler Noise [mHz]", size = 15)
+    ax.set_ylabel("Occurrences", size = 15)
+    ax.legend(fontsize="medium", prop={'size': plt.rcParams['legend.fontsize'] + 3 if isinstance(plt.rcParams['legend.fontsize'], (int, float)) else 13})
     ax.grid(True, alpha=0.3)
+    ax.tick_params(axis='both', which='major', labelsize=12)
 
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
