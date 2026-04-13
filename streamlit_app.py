@@ -92,9 +92,9 @@ def get_time_series_fig(data):
     axs[0].scatter(
         data.utc_datetime, data.signal_to_noise, marker="+", color="blue", lw=0.5, s=5
     )
-    axs[0].set_ylabel("SNR")
+    axs[0].set_ylabel("SNR", fontsize=13)
     axs[0].grid(True, alpha=0.3)
-    axs[0].set_title(f"{data.receiving_station_name} - {data.utc_date}")
+    axs[0].set_title(f"{data.receiving_station_name} - {data.utc_date}", fontsize=15)
 
     axs[1].scatter(
         data.utc_datetime,
@@ -104,15 +104,17 @@ def get_time_series_fig(data):
         lw=0.5,
         s=7,
         )
-    axs[1].set_ylabel("Doppler Noise [mHz]")
+    axs[1].set_ylabel("Doppler Noise [mHz]", fontsize=13)
     axs[1].grid(True, alpha=0.3)
 
     axs[2].scatter(
         data.utc_datetime, data.frequency_detection / 1e6, marker="o", color="black", s=5
     )
-    axs[2].set_ylabel("Freq Det [MHz]")
-    axs[2].set_xlabel("UTC Time")
+    axs[2].set_ylabel("Freq Det [MHz]", fontsize=13)
+    axs[2].set_xlabel("UTC Time", fontsize=13)
     axs[2].grid(True, alpha=0.3)
+    for ax in axs:
+        ax.tick_params(labelsize=13)
     fig.autofmt_xdate()
     return fig
 
@@ -144,11 +146,11 @@ def get_comparison_fig(raw, filtered):
         label=f"Kept ({retention:.1f}%)",
         alpha=0.5,
     )
-    ax1.set_ylabel("SNR")
-    ax1.legend(loc="upper right")
+    ax1.set_ylabel("SNR", fontsize=13)
+    ax1.legend(loc="upper right", fontsize=13)
     ax1.grid(True, alpha=0.3)
     ax1.set_title(
-        f"{filtered.receiving_station_name} - {filtered.utc_date} (Raw vs Filtered)"
+        f"{filtered.receiving_station_name} - {filtered.utc_date} (Raw vs Filtered)", fontsize=15
     )
 
     ax2.scatter(
@@ -170,7 +172,7 @@ def get_comparison_fig(raw, filtered):
         label="Kept",
         alpha=0.5,
         )
-    ax2.set_ylabel("Doppler Noise [mHz]")
+    ax2.set_ylabel("Doppler Noise [mHz]", fontsize=13)
     ax2.grid(True, alpha=0.3)
 
     ax3.scatter(
@@ -190,10 +192,12 @@ def get_comparison_fig(raw, filtered):
         label="Kept",
         alpha=0.5,
         )
-    ax3.set_ylabel("Freq Det [MHz]")
-    ax3.set_xlabel("UTC Time")
+    ax3.set_ylabel("Freq Det [MHz]", fontsize=13)
+    ax3.set_xlabel("UTC Time", fontsize=13)
     ax3.grid(True, alpha=0.3)
     ax3.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    for ax in [ax1, ax2, ax3]:
+        ax.tick_params(labelsize=13)
     fig.autofmt_xdate()
     return fig
 
@@ -276,11 +280,11 @@ def get_mission_summary_plot(stats_df):
         if st_name == "Nt" and experiment_name == "ec094b":
             ax2.errorbar(snr, rms, label=label, marker = 'x', markersize = 10, color = 'red')
         ax2.errorbar(snr, rms, label=label, **marker_style)
-        ax2.annotate(st_name, (snr, rms), fontsize=10, alpha=0.7)
+        #ax2.annotate(st_name, (snr, rms), fontsize=15, alpha=0.5)
 
     # 5. Formatting
-    ax1.set_ylabel("SNR [dB]", fontsize=12)
-    ax1.set_xlabel("Station Code", fontsize=12)
+    ax1.set_ylabel("SNR [dB]", fontsize=15)
+    ax1.set_xlabel("Station Code", fontsize=15)
     ax1.grid(True)
     # Legend is placed on top plot
     ax1.legend(
@@ -288,14 +292,15 @@ def get_mission_summary_plot(stats_df):
         loc="upper left",
         borderaxespad=0.0,
         title="Experiment",
-        fontsize=12,
+        title_fontsize=15,
+        fontsize=15,
     )
-    ax1.tick_params(axis="both", which="major", labelsize=12)
-    ax2.set_ylabel("RMS Doppler [mHz]", fontsize=12)
-    ax2.set_xlabel("SNR [dB]", fontsize=12)
+    ax1.tick_params(axis="both", which="major", labelsize=15)
+    ax2.set_ylabel("RMS Doppler [mHz]", fontsize=15)
+    ax2.set_xlabel("SNR [dB]", fontsize=15)
     ax2.grid(True)
     ax2.set_yscale("linear")
-    ax2.tick_params(axis="both", which="major", labelsize=12)
+    ax2.tick_params(axis="both", which="major", labelsize=15)
     plt.tight_layout()
     return fig
 
@@ -384,9 +389,9 @@ def plot_allan_deviation(data_list):
             )
 
     # ax.grid(True, which="both", ls="--", alpha=0.5)
-    ax.set_xlabel("Averaging Time (τ) [s]")
-    ax.set_ylabel("Overlapping Allan Deviation")
-    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    ax.set_xlabel("Averaging Time (τ) [s]", fontsize=13)
+    ax.set_ylabel("Overlapping Allan Deviation", fontsize=13)
+    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=13)
 
     # Force Integer Ticks on X-Axis
     ax.xaxis.set_major_formatter(ScalarFormatter())
@@ -602,12 +607,12 @@ if st.session_state.data_loaded and st.session_state.processing_queue:
                 if times:
                     fig_el, ax_el = plt.subplots(figsize=(4, 2.5))
                     ax_el.plot(times, els, color="green")
-                    ax_el.set_title("Elevation Profile", fontsize=9)
-                    ax_el.set_ylabel("El [deg]")
-                    ax_el.set_xlabel("Time")
+                    ax_el.set_title("Elevation Profile", fontsize=12)
+                    ax_el.set_ylabel("El [deg]", fontsize=11)
+                    ax_el.set_xlabel("Time", fontsize=11)
                     ax_el.grid(True, alpha=0.3)
                     ax_el.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-                    ax_el.tick_params(labelsize=8)
+                    ax_el.tick_params(labelsize=11)
                     fig_el.autofmt_xdate()
                     st.pyplot(fig_el)
             with c_plot:
@@ -645,11 +650,11 @@ if st.session_state.data_loaded and st.session_state.processing_queue:
                 ax_g.plot(x, norm.pdf(x, mu, std) * len(noise_mhz) * bin_width, "r--", lw=1)
                 ax_g.set_title(
                     f"{target_data.mission_name.upper()}- Gaussian Fit of Doppler Noise | Station: {p_data.receiving_station_name}",
-                    fontsize=5,
+                    fontsize=8,
                 )
-                ax_g.set_xlabel("Doppler Noise [mHz]", fontsize=6)
-                ax_g.set_ylabel("Counts", fontsize=6)
-                ax_g.tick_params(labelsize=6)
+                ax_g.set_xlabel("Doppler Noise [mHz]", fontsize=9)
+                ax_g.set_ylabel("Counts", fontsize=9)
+                ax_g.tick_params(labelsize=9)
                 st.pyplot(fig_g)
                 plt.close(fig_g)
 
