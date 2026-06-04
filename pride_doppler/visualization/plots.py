@@ -571,7 +571,7 @@ def plot_gaussian(filtered_doppler_noise, station_code, mission_name, save_dir=N
     fig, ax = plt.subplots(1, 1, figsize=(10, 5))
     counts, bins, _ = ax.hist(
         filtered_doppler_noise * 1000,
-        bins=60,
+        bins=40,
         density=False,
         alpha=0.6,
         color="skyblue",
