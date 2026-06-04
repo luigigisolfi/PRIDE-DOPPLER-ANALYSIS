@@ -386,7 +386,8 @@ ax2.set_yscale("log")
 ########################################################################################################
 
 plt.tight_layout(pad=2)
-plt.savefig(os.path.join(root_dir, "final_mission_summary.png"))
+string_for_filename = "_".join(str(mission) for mission in missions_to_analyse)
+plt.savefig(os.path.join(root_dir, f"final_mission_summary_{string_for_filename}.png"))
 print(f"Summary plot saved to {root_dir}")
 # plt.show() # Uncomment to view interactive
 
